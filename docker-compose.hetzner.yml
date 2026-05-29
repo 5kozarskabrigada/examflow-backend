@@ -1,0 +1,37 @@
+services:
+  examflow-api:
+    build:
+      context: ./backend/ExamFlow.Api
+      dockerfile: Dockerfile
+    container_name: examflow-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__NeonDatabase: ${NEON_CONNECTION_STRING}
+      Frontend__AllowedOrigins__0: ${FRONTEND_ORIGIN}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  caddy:
+    image: caddy:2.9
+    container_name: examflow-caddy
+    restart: unless-stopped
+    depends_on:
+      - examflow-api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    volumes:
+      - ./deployment/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,12 @@
+{$API_DOMAIN} {
+  encode gzip
+
+  @api path /api/* /openapi/*
+  handle @api {
+    reverse_proxy examflow-api:8080
+  }
+
+  handle {
+    respond "ExamFlow API is running" 200
+  }
+}
