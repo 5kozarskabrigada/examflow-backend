@@ -29,25 +29,46 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    env:
+      HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
+      HETZNER_USER: ${{ secrets.HETZNER_USER }}
+      HETZNER_SSH_PORT: ${{ secrets.HETZNER_SSH_PORT || '22' }}
+      HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+      NEON_CONNECTION_STRING: ${{ secrets.NEON_CONNECTION_STRING }}
+      FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
+      API_DOMAIN: ${{ secrets.API_DOMAIN }}
 
     steps:
+      - name: Prepare SSH key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          if grep -q '\\n' <<< "$HETZNER_SSH_KEY"; then
+            printf '%b' "$HETZNER_SSH_KEY" > ~/.ssh/id_ed25519
+          else
+            printf '%s\n' "$HETZNER_SSH_KEY" > ~/.ssh/id_ed25519
+          fi
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Add server to known_hosts
+        shell: bash
+        run: |
+          ssh-keyscan -p "$HETZNER_SSH_PORT" "$HETZNER_HOST" >> ~/.ssh/known_hosts
+
       - name: Deploy to Hetzner
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: ${{ secrets.HETZNER_USER }}
-          key: ${{ secrets.HETZNER_SSH_KEY }}
-          port: ${{ secrets.HETZNER_SSH_PORT || '22' }}
-          script_stop: true
-          script: |
-            cd /opt/examflow-backend
-            git pull origin main
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$HETZNER_SSH_PORT" "$HETZNER_USER@$HETZNER_HOST" <<EOF
+          set -e
+          cd /opt/examflow-backend
+          git pull origin main
 
-            cat > .env <<EOF
-            NEON_CONNECTION_STRING=${{ secrets.NEON_CONNECTION_STRING }}
-            FRONTEND_ORIGIN=${{ secrets.FRONTEND_ORIGIN }}
-            API_DOMAIN=${{ secrets.API_DOMAIN }}
-            EOF
+          cat > .env <<ENVVARS
+          NEON_CONNECTION_STRING=$NEON_CONNECTION_STRING
+          FRONTEND_ORIGIN=$FRONTEND_ORIGIN
+          API_DOMAIN=$API_DOMAIN
+          ENVVARS
 
-            docker compose -f docker-compose.nodomain.yml up -d --build
-            docker image prune -f
+          docker compose -f docker-compose.nodomain.yml up -d --build
+          docker image prune -f
+          EOF
