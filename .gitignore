@@ -1,5 +1,8 @@
 **/bin/
 **/obj/
 .env
+.env.*
+!.env.example
+**/appsettings.Production.json
 .vscode/
 .DS_Store
