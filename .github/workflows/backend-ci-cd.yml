@@ -43,12 +43,23 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          if grep -q '\\n' <<< "$HETZNER_SSH_KEY"; then
-            printf '%b' "$HETZNER_SSH_KEY" > ~/.ssh/id_ed25519
+          KEY_RAW="$HETZNER_SSH_KEY"
+          KEY_RAW="${KEY_RAW%\"}"
+          KEY_RAW="${KEY_RAW#\"}"
+
+          if grep -q '\\n' <<< "$KEY_RAW"; then
+            printf '%b' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
           else
-            printf '%s\n' "$HETZNER_SSH_KEY" > ~/.ssh/id_ed25519
+            printf '%s' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
           fi
+
+          sed -i -e '$a\' ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null 2>&1; then
+            echo "::error::Invalid SSH private key in HETZNER_SSH_KEY. Save the exact private key text (BEGIN/END lines included), without extra quotes."
+            exit 1
+          fi
 
       - name: Add server to known_hosts
         shell: bash
@@ -58,7 +69,7 @@ jobs:
       - name: Deploy to Hetzner
         shell: bash
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p "$HETZNER_SSH_PORT" "$HETZNER_USER@$HETZNER_HOST" <<EOF
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$HETZNER_SSH_PORT" "$HETZNER_USER@$HETZNER_HOST" <<EOF
           set -e
           cd /opt/examflow-backend
           git pull origin main
