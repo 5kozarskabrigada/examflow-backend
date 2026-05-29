@@ -49,5 +49,5 @@ jobs:
             API_DOMAIN=${{ secrets.API_DOMAIN }}
             EOF
 
-            docker compose -f docker-compose.hetzner.yml up -d --build
+            docker compose -f docker-compose.nodomain.yml up -d --build
             docker image prune -f

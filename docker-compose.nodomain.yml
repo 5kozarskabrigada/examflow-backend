@@ -1,0 +1,19 @@
+services:
+  examflow-api:
+    build:
+      context: ./backend/ExamFlow.Api
+      dockerfile: Dockerfile
+    container_name: examflow-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__NeonDatabase: ${NEON_CONNECTION_STRING}
+      Frontend__AllowedOrigins__0: ${FRONTEND_ORIGIN}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
