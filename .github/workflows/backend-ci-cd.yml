@@ -70,12 +70,39 @@ jobs:
       - name: Add server to known_hosts
         shell: bash
         run: |
-          ssh-keyscan -p "$HETZNER_SSH_PORT" "$HETZNER_HOST" >> ~/.ssh/known_hosts
+          HOST="$(printf '%s' "$HETZNER_HOST" | tr -d '\r\n ' )"
+          PORT="$(printf '%s' "$HETZNER_SSH_PORT" | tr -d '\r\n ' )"
+
+          if [ -z "$HOST" ] || [ -z "$PORT" ]; then
+            echo "::error::HETZNER_HOST or HETZNER_SSH_PORT is empty."
+            exit 1
+          fi
+
+          ssh-keyscan -p "$PORT" "$HOST" >> ~/.ssh/known_hosts
+
+      - name: Verify SSH authentication
+        shell: bash
+        run: |
+          HOST="$(printf '%s' "$HETZNER_HOST" | tr -d '\r\n ' )"
+          USERNAME="$(printf '%s' "$HETZNER_USER" | tr -d '\r\n ' )"
+          PORT="$(printf '%s' "$HETZNER_SSH_PORT" | tr -d '\r\n ' )"
+
+          if [ -z "$HOST" ] || [ -z "$USERNAME" ] || [ -z "$PORT" ]; then
+            echo "::error::HETZNER_HOST, HETZNER_USER, or HETZNER_SSH_PORT is empty."
+            exit 1
+          fi
+
+          echo "Testing SSH auth to ${USERNAME}@${HOST}:${PORT}"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" "echo SSH_AUTH_OK"
 
       - name: Deploy to Hetzner
         shell: bash
         run: |
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$HETZNER_SSH_PORT" "$HETZNER_USER@$HETZNER_HOST" <<EOF
+          HOST="$(printf '%s' "$HETZNER_HOST" | tr -d '\r\n ' )"
+          USERNAME="$(printf '%s' "$HETZNER_USER" | tr -d '\r\n ' )"
+          PORT="$(printf '%s' "$HETZNER_SSH_PORT" | tr -d '\r\n ' )"
+
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<EOF
           set -e
           cd /opt/examflow-backend
           git pull origin main
