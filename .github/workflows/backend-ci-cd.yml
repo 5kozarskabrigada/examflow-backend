@@ -105,6 +105,7 @@ jobs:
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<EOF
           set -e
           cd /opt/examflow-backend
+          git config --global --add safe.directory /opt/examflow-backend
           git pull origin main
 
           cat > .env <<ENVVARS
