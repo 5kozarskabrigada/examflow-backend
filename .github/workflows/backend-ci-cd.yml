@@ -101,6 +101,13 @@ jobs:
           HOST="$(printf '%s' "$HETZNER_HOST" | tr -d '\r\n ' )"
           USERNAME="$(printf '%s' "$HETZNER_USER" | tr -d '\r\n ' )"
           PORT="$(printf '%s' "$HETZNER_SSH_PORT" | tr -d '\r\n ' )"
+          API_DOMAIN_CLEAN="$(printf '%s' "$API_DOMAIN" | tr -d '\r\n ' )"
+
+          if [ -n "$API_DOMAIN_CLEAN" ]; then
+            COMPOSE_FILE="docker-compose.hetzner.yml"
+          else
+            COMPOSE_FILE="docker-compose.nodomain.yml"
+          fi
 
           ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" <<EOF
           set -e
@@ -114,6 +121,6 @@ jobs:
           API_DOMAIN=$API_DOMAIN
           ENVVARS
 
-          docker compose -f docker-compose.nodomain.yml up -d --build
+          docker compose -f $COMPOSE_FILE up -d --build
           docker image prune -f
           EOF
