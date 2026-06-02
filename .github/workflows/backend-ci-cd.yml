@@ -34,6 +34,7 @@ jobs:
       HETZNER_USER: ${{ secrets.HETZNER_USER }}
       HETZNER_SSH_PORT: ${{ secrets.HETZNER_SSH_PORT || '22' }}
       HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+      HETZNER_SSH_KEY_B64: ${{ secrets.HETZNER_SSH_KEY_B64 }}
       NEON_CONNECTION_STRING: ${{ secrets.NEON_CONNECTION_STRING }}
       FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
       API_DOMAIN: ${{ secrets.API_DOMAIN }}
@@ -43,21 +44,26 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          KEY_RAW="$HETZNER_SSH_KEY"
-          KEY_RAW="${KEY_RAW%\"}"
-          KEY_RAW="${KEY_RAW#\"}"
 
-          if grep -q '\\n' <<< "$KEY_RAW"; then
-            printf '%b' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
+          if [ -n "$HETZNER_SSH_KEY_B64" ]; then
+            printf '%s' "$HETZNER_SSH_KEY_B64" | tr -d '\r\n ' | base64 --decode > ~/.ssh/id_ed25519
           else
-            printf '%s' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
+            KEY_RAW="$HETZNER_SSH_KEY"
+            KEY_RAW="${KEY_RAW%\"}"
+            KEY_RAW="${KEY_RAW#\"}"
+
+            if grep -q '\\n' <<< "$KEY_RAW"; then
+              printf '%b' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
+            else
+              printf '%s' "$KEY_RAW" | tr -d '\r' > ~/.ssh/id_ed25519
+            fi
           fi
 
           sed -i -e '$a\' ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
           if ! ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null 2>&1; then
-            echo "::error::Invalid SSH private key in HETZNER_SSH_KEY. Save the exact private key text (BEGIN/END lines included), without extra quotes."
+            echo "::error::Invalid SSH private key. Set HETZNER_SSH_KEY_B64 to base64(private key) or HETZNER_SSH_KEY to exact BEGIN/END key text without extra quotes."
             exit 1
           fi
 
