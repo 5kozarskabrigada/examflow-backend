@@ -56,10 +56,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// HTTPS redirect disabled: handled by reverse proxy (Caddy/nginx) or not needed in no-domain mode
 
 using (var scope = app.Services.CreateScope())
 {
