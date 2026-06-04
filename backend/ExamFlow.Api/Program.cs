@@ -152,6 +152,47 @@ using (var scope = app.Services.CreateScope())
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Difficulty"" ON ""Questions"" (""Difficulty"");
         ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""MockExams"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Subject"" VARCHAR(64) NOT NULL,
+                ""Title"" VARCHAR(250) NOT NULL,
+                ""ClassName"" VARCHAR(150) NOT NULL,
+                ""StructureText"" VARCHAR(1000),
+                ""ScheduledForUtc"" TIMESTAMP WITH TIME ZONE NULL,
+                ""Status"" VARCHAR(32) NOT NULL DEFAULT 'Draft',
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_MockExams_Subject"" ON ""MockExams"" (""Subject"");
+            CREATE INDEX IF NOT EXISTS ""IX_MockExams_Status"" ON ""MockExams"" (""Status"");
+        ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Announcements"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Title"" VARCHAR(250) NOT NULL,
+                ""Audience"" VARCHAR(150) NOT NULL,
+                ""State"" VARCHAR(32) NOT NULL DEFAULT 'Sent',
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Announcements_CreatedAtUtc"" ON ""Announcements"" (""CreatedAtUtc"");
+        ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""CalendarEvents"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Title"" VARCHAR(250) NOT NULL,
+                ""EventType"" VARCHAR(100) NOT NULL,
+                ""StartsAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_StartsAtUtc"" ON ""CalendarEvents"" (""StartsAtUtc"");
+            CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_EventType"" ON ""CalendarEvents"" (""EventType"");
+        ");
     }
 }
 
