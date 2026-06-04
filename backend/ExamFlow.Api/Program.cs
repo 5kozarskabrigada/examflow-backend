@@ -142,8 +142,11 @@ using (var scope = app.Services.CreateScope())
                 ""CorrectAnswer"" VARCHAR(1000),
                 ""ExplanationText"" VARCHAR(4000),
                 ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+                ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
+
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE;
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
@@ -331,6 +334,12 @@ api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
             x.QuestionType.ToLower().Contains(search.ToLower()));
     }
 
+    var bookmarked = request.Query["bookmarked"].ToString().Trim();
+    if (bool.TryParse(bookmarked, out var bookmarkedValue))
+    {
+        query = query.Where(x => x.Bookmarked == bookmarkedValue);
+    }
+
     var questions = await query
         .OrderBy(x => x.Subject)
         .ThenBy(x => x.Category)
@@ -347,6 +356,55 @@ api.MapPost("/questions", async (AppDbContext db, Question input) =>
     db.Questions.Add(input);
     await db.SaveChangesAsync();
     return Results.Created($"/api/questions/{input.Id}", input);
+});
+
+api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input) =>
+{
+    var existing = await db.Questions.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Question not found." });
+    }
+
+    existing.Subject = input.Subject.Trim();
+    existing.Category = input.Category.Trim();
+    existing.Difficulty = input.Difficulty.Trim();
+    existing.QuestionType = input.QuestionType.Trim();
+    existing.QuestionText = input.QuestionText.Trim();
+    existing.OptionsJson = input.OptionsJson;
+    existing.CorrectAnswer = input.CorrectAnswer;
+    existing.ExplanationText = input.ExplanationText;
+    existing.Points = input.Points;
+    existing.Bookmarked = input.Bookmarked;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapPatch("/questions/{id:int}/bookmark", async (int id, AppDbContext db, BookmarkRequest request) =>
+{
+    var existing = await db.Questions.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Question not found." });
+    }
+
+    existing.Bookmarked = request.Bookmarked;
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapDelete("/questions/{id:int}", async (int id, AppDbContext db) =>
+{
+    var existing = await db.Questions.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Question not found." });
+    }
+
+    db.Questions.Remove(existing);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
 });
 
 // Classroom endpoints
@@ -390,129 +448,9 @@ api.MapGet("/dashboard/stats", async (AppDbContext db) =>
     });
 });
 
-// Seed data endpoint for development/testing
-api.MapPost("/seed-data", async (AppDbContext db) =>
-{
-    // Check if data already exists
-    var existingStudents = await db.Students.CountAsync();
-    if (existingStudents > 0)
-    {
-        return Results.Ok(new { message = "Data already seeded", students = existingStudents });
-    }
-
-    // Seed students
-    var students = new[]
-    {
-        new Student { FullName = "Emma Johnson", Email = "emma.johnson@example.com", ExamGoal = "SAT", TargetScore = "1500", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Liam Smith", Email = "liam.smith@example.com", ExamGoal = "SAT", TargetScore = "1450", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Olivia Brown", Email = "olivia.brown@example.com", ExamGoal = "ACT", TargetScore = "34", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Noah Davis", Email = "noah.davis@example.com", ExamGoal = "IELTS", TargetScore = "7.5", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Ava Wilson", Email = "ava.wilson@example.com", ExamGoal = "SAT", TargetScore = "1400", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Ethan Martinez", Email = "ethan.martinez@example.com", ExamGoal = "TOEFL", TargetScore = "110", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Sophia Anderson", Email = "sophia.anderson@example.com", ExamGoal = "SAT", TargetScore = "1550", CreatedAtUtc = DateTime.UtcNow },
-        new Student { FullName = "Mason Taylor", Email = "mason.taylor@example.com", ExamGoal = "ACT", TargetScore = "32", CreatedAtUtc = DateTime.UtcNow },
-    };
-
-    db.Students.AddRange(students);
-    await db.SaveChangesAsync();
-
-    // Seed assignments
-    var assignments = new[]
-    {
-        new Assignment 
-        { 
-            Title = "SAT Math Practice - Algebra", 
-            ClassName = "SAT Prep Morning", 
-            DueAtUtc = DateTime.UtcNow.AddDays(2), 
-            QuestionCount = 20,
-            Status = "Pending",
-            CreatedAtUtc = DateTime.UtcNow 
-        },
-        new Assignment 
-        { 
-            Title = "SAT Reading Comprehension", 
-            ClassName = "SAT Prep Morning", 
-            DueAtUtc = DateTime.UtcNow.AddDays(5), 
-            QuestionCount = 15,
-            Status = "Pending",
-            CreatedAtUtc = DateTime.UtcNow 
-        },
-        new Assignment 
-        { 
-            Title = "ACT Science Reasoning", 
-            ClassName = "ACT Weekend Intensive", 
-            DueAtUtc = DateTime.UtcNow.AddDays(3), 
-            QuestionCount = 25,
-            Status = "In Progress",
-            CreatedAtUtc = DateTime.UtcNow.AddDays(-2) 
-        },
-        new Assignment 
-        { 
-            Title = "IELTS Writing Task 2 - Opinion Essay", 
-            ClassName = "IELTS Advanced", 
-            DueAtUtc = DateTime.UtcNow.AddDays(1), 
-            QuestionCount = 5,
-            Status = "Pending",
-            CreatedAtUtc = DateTime.UtcNow 
-        },
-        new Assignment 
-        { 
-            Title = "SAT Essay Practice", 
-            ClassName = "SAT Prep Afternoon", 
-            DueAtUtc = DateTime.UtcNow.AddDays(-1), 
-            QuestionCount = 3,
-            Status = "Completed",
-            CreatedAtUtc = DateTime.UtcNow.AddDays(-7) 
-        },
-        new Assignment 
-        { 
-            Title = "TOEFL Integrated Writing", 
-            ClassName = "TOEFL Preparation", 
-            DueAtUtc = DateTime.UtcNow.AddDays(4), 
-            QuestionCount = 8,
-            Status = "Pending",
-            CreatedAtUtc = DateTime.UtcNow 
-        },
-    };
-
-    db.Assignments.AddRange(assignments);
-    await db.SaveChangesAsync();
-
-    // Seed classrooms
-    var classrooms = new[]
-    {
-        new Classroom { Name = "SAT Core", Subject = "SAT", InviteCode = "EXF-204", Schedule = "Mon/Wed 4:00 PM", StudentCount = 12, CreatedAtUtc = DateTime.UtcNow },
-        new Classroom { Name = "SAT Practice", Subject = "SAT", InviteCode = "EXF-311", Schedule = "Tue/Thu 5:30 PM", StudentCount = 15, CreatedAtUtc = DateTime.UtcNow },
-        new Classroom { Name = "IELTS Core", Subject = "IELTS", InviteCode = "EXF-518", Schedule = "Mon/Fri 3:15 PM", StudentCount = 10, CreatedAtUtc = DateTime.UtcNow },
-        new Classroom { Name = "IELTS Advanced", Subject = "IELTS", InviteCode = "EXF-622", Schedule = "Wed 6:00 PM", StudentCount = 8, CreatedAtUtc = DateTime.UtcNow },
-        new Classroom { Name = "ACT Prep", Subject = "ACT", InviteCode = "EXF-745", Schedule = "Sat 10:00 AM", StudentCount = 14, CreatedAtUtc = DateTime.UtcNow },
-        new Classroom { Name = "TOEFL Intensive", Subject = "TOEFL", InviteCode = "EXF-889", Schedule = "Sun 2:00 PM", StudentCount = 9, CreatedAtUtc = DateTime.UtcNow },
-    };
-
-    db.Classrooms.AddRange(classrooms);
-    await db.SaveChangesAsync();
-
-    // Seed questions
-    var questions = new[]
-    {
-        new Question { Subject = "SAT", Category = "Reading", Difficulty = "Medium", QuestionType = "MCQ · 4 options", QuestionText = "The primary purpose of the passage is to challenge the assumption that urban growth always lowers quality of life.", CorrectAnswer = "To challenge a common assumption", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "SAT", Category = "Math", Difficulty = "Easy", QuestionType = "MCQ · 4 options", QuestionText = "If 3x + 5 = 20, what value of x satisfies the equation?", CorrectAnswer = "5", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "SAT", Category = "Writing", Difficulty = "Hard", QuestionType = "MCQ · 4 options", QuestionText = "Which option most effectively combines the underlined sentences while preserving meaning?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "IELTS", Category = "Writing", Difficulty = "Hard", QuestionType = "Essay · Task 2", QuestionText = "Some people believe that modern technology has made daily life more complex than before. Discuss both views.", Points = 5m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "IELTS", Category = "Reading", Difficulty = "Medium", QuestionType = "True/False/Not Given", QuestionText = "The passage suggests that the main reason for policy change was pressure from local communities.", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "IELTS", Category = "Speaking", Difficulty = "Medium", QuestionType = "Cue card · Part 2", QuestionText = "Describe a time when you had to adapt to a new situation quickly.", Points = 3m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "CSCA", Category = "Training Science", Difficulty = "Medium", QuestionType = "MCQ · 4 options", QuestionText = "Which energy system contributes most during repeated 10-second maximal sprint intervals with short rest periods?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "CSCA", Category = "Program Design", Difficulty = "Hard", QuestionType = "Short answer", QuestionText = "Design a 4-week progression for an intermediate athlete focused on lower-body power output.", Points = 4m, CreatedAtUtc = DateTime.UtcNow },
-        new Question { Subject = "CSCA", Category = "Testing", Difficulty = "Easy", QuestionType = "MCQ · 4 options", QuestionText = "Which field test is most appropriate for estimating lower-body explosive power in volleyball athletes?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
-    };
-
-    db.Questions.AddRange(questions);
-    await db.SaveChangesAsync();
-
-    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length, classrooms = classrooms.Length, questions = questions.Length });
-});
-
 app.Run();
 
 static AuthUserResponse ToAuthUser(AppUser user) =>
     new(user.Id, user.FullName, user.Email, user.Role, user.PrimarySubject);
+
+public record BookmarkRequest(bool Bookmarked);

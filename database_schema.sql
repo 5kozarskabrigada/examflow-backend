@@ -185,9 +185,9 @@ CREATE TABLE IF NOT EXISTS Questions (
     CorrectAnswer TEXT,
     ExplanationText TEXT,
     Points REAL NOT NULL DEFAULT 1.0,
-    CreatedByUserId INTEGER NOT NULL,
+    Bookmarked INTEGER NOT NULL DEFAULT 0,
     CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id) ON DELETE CASCADE
+    CHECK (Bookmarked IN (0, 1))
 );
 
 CREATE INDEX IF NOT EXISTS idx_questions_subject ON Questions(Subject);
@@ -257,59 +257,9 @@ CREATE INDEX IF NOT EXISTS idx_progress_student ON StudentProgress(StudentId);
 CREATE INDEX IF NOT EXISTS idx_progress_subject ON StudentProgress(Subject);
 
 -- ============================================
--- Sample Seed Data (Optional)
+-- No Seed Data
 -- ============================================
-
--- Sample Students
-INSERT OR IGNORE INTO Students (FullName, Email, ExamGoal, TargetScore, CreatedAtUtc) VALUES
-('Emma Johnson', 'emma.johnson@example.com', 'SAT', '1500', datetime('now')),
-('Liam Smith', 'liam.smith@example.com', 'SAT', '1450', datetime('now')),
-('Olivia Brown', 'olivia.brown@example.com', 'ACT', '34', datetime('now')),
-('Noah Davis', 'noah.davis@example.com', 'IELTS', '7.5', datetime('now')),
-('Ava Wilson', 'ava.wilson@example.com', 'SAT', '1400', datetime('now')),
-('Ethan Martinez', 'ethan.martinez@example.com', 'TOEFL', '110', datetime('now')),
-('Sophia Anderson', 'sophia.anderson@example.com', 'SAT', '1550', datetime('now')),
-('Mason Taylor', 'mason.taylor@example.com', 'ACT', '32', datetime('now'));
-
--- Sample Classrooms
-INSERT OR IGNORE INTO Classrooms (Name, Subject, InviteCode, Schedule, StudentCount, CreatedAtUtc) VALUES
-('SAT Core', 'SAT', 'EXF-204', 'Mon/Wed 4:00 PM', 12, datetime('now')),
-('SAT Practice', 'SAT', 'EXF-311', 'Tue/Thu 5:30 PM', 15, datetime('now')),
-('IELTS Core', 'IELTS', 'EXF-518', 'Mon/Fri 3:15 PM', 10, datetime('now')),
-('IELTS Advanced', 'IELTS', 'EXF-622', 'Wed 6:00 PM', 8, datetime('now')),
-('ACT Prep', 'ACT', 'EXF-745', 'Sat 10:00 AM', 14, datetime('now')),
-('TOEFL Intensive', 'TOEFL', 'EXF-889', 'Sun 2:00 PM', 9, datetime('now'));
-
--- Sample Assignments
-INSERT OR IGNORE INTO Assignments (Title, ClassName, DueAtUtc, QuestionCount, Status, CreatedAtUtc) VALUES
-('SAT Math Practice - Algebra', 'SAT Prep Morning', datetime('now', '+2 days'), 20, 'Pending', datetime('now')),
-('SAT Reading Comprehension', 'SAT Prep Morning', datetime('now', '+5 days'), 15, 'Pending', datetime('now')),
-('ACT Science Reasoning', 'ACT Weekend Intensive', datetime('now', '+3 days'), 25, 'In Progress', datetime('now', '-2 days')),
-('IELTS Writing Task 2 - Opinion Essay', 'IELTS Advanced', datetime('now', '+1 day'), 5, 'Pending', datetime('now')),
-('SAT Essay Practice', 'SAT Prep Afternoon', datetime('now', '-1 day'), 3, 'Completed', datetime('now', '-7 days')),
-('TOEFL Integrated Writing', 'TOEFL Preparation', datetime('now', '+4 days'), 8, 'Pending', datetime('now'));
-
--- Sample Classroom Enrollments
-INSERT OR IGNORE INTO ClassroomEnrollments (ClassroomId, StudentId, Status) VALUES
-(1, 1, 'Active'), (1, 2, 'Active'), (1, 5, 'Active'), (1, 7, 'Active'),
-(2, 1, 'Active'), (2, 2, 'Active'), (2, 5, 'Active'),
-(3, 4, 'Active'),
-(4, 4, 'Active'),
-(5, 3, 'Active'), (5, 8, 'Active'),
-(6, 6, 'Active');
-
--- Sample Questions
-INSERT OR IGNORE INTO Questions (Subject, Category, Difficulty, QuestionType, QuestionText, CorrectAnswer, Points, CreatedByUserId) VALUES
-('SAT', 'Math - Algebra', 'Medium', 'Multiple Choice', 'If 2x + 5 = 15, what is the value of x?', '5', 1.0, 1),
-('SAT', 'Reading', 'Hard', 'Multiple Choice', 'What is the main theme of the passage?', 'Personal growth through adversity', 1.5, 1),
-('IELTS', 'Writing', 'Medium', 'Essay', 'Some people believe technology has made our lives easier. Discuss both views.', NULL, 5.0, 1),
-('ACT', 'Science', 'Easy', 'Multiple Choice', 'What is the pH of pure water?', '7', 1.0, 1);
-
--- Sample Announcements
-INSERT OR IGNORE INTO Announcements (ClassroomId, Title, Content, Priority, CreatedByUserId) VALUES
-(1, 'Upcoming Mock Exam', 'Full-length SAT practice exam scheduled for next Saturday at 9 AM. Please arrive 15 minutes early.', 'High', 1),
-(1, 'Study Materials Available', 'New practice materials have been uploaded to the resources section.', 'Normal', 1),
-(3, 'Class Rescheduled', 'Monday class moved to Tuesday this week due to holiday.', 'Urgent', 1);
+-- This schema intentionally does not insert sample records.
 
 -- ============================================
 -- Notes:

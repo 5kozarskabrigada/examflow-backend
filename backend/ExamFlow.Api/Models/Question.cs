@@ -12,5 +12,6 @@ public class Question
     public string? CorrectAnswer { get; set; }
     public string? ExplanationText { get; set; }
     public decimal Points { get; set; } = 1m;
+    public bool Bookmarked { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

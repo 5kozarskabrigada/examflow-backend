@@ -187,9 +187,9 @@ CREATE TABLE IF NOT EXISTS "Questions" (
     "CorrectAnswer" TEXT,
     "ExplanationText" TEXT,
     "Points" REAL NOT NULL DEFAULT 1.0,
-    "CreatedByUserId" INTEGER NOT NULL,
+    "Bookmarked" BOOLEAN NOT NULL DEFAULT FALSE,
     "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("CreatedByUserId") REFERENCES "Users"("Id") ON DELETE CASCADE
+    CHECK ("Bookmarked" IN (TRUE, FALSE))
 );
 
 CREATE INDEX IF NOT EXISTS "idx_questions_subject" ON "Questions"("Subject");
@@ -259,65 +259,9 @@ CREATE INDEX IF NOT EXISTS "idx_progress_student" ON "StudentProgress"("StudentI
 CREATE INDEX IF NOT EXISTS "idx_progress_subject" ON "StudentProgress"("Subject");
 
 -- ============================================
--- Sample Seed Data (Optional - for testing)
+-- No Seed Data
 -- ============================================
-
--- Sample Students
-INSERT INTO "Students" ("FullName", "Email", "ExamGoal", "TargetScore") VALUES
-('Emma Johnson', 'emma.johnson@example.com', 'SAT', '1500'),
-('Liam Smith', 'liam.smith@example.com', 'SAT', '1450'),
-('Olivia Brown', 'olivia.brown@example.com', 'ACT', '34'),
-('Noah Davis', 'noah.davis@example.com', 'IELTS', '7.5'),
-('Ava Wilson', 'ava.wilson@example.com', 'SAT', '1400'),
-('Ethan Martinez', 'ethan.martinez@example.com', 'TOEFL', '110'),
-('Sophia Anderson', 'sophia.anderson@example.com', 'SAT', '1550'),
-('Mason Taylor', 'mason.taylor@example.com', 'ACT', '32')
-ON CONFLICT DO NOTHING;
-
--- Sample Classrooms
-INSERT INTO "Classrooms" ("Name", "Subject", "InviteCode", "Schedule", "StudentCount") VALUES
-('SAT Core', 'SAT', 'EXF-204', 'Mon/Wed 4:00 PM', 12),
-('SAT Practice', 'SAT', 'EXF-311', 'Tue/Thu 5:30 PM', 15),
-('IELTS Core', 'IELTS', 'EXF-518', 'Mon/Fri 3:15 PM', 10),
-('IELTS Advanced', 'IELTS', 'EXF-622', 'Wed 6:00 PM', 8),
-('ACT Prep', 'ACT', 'EXF-745', 'Sat 10:00 AM', 14),
-('TOEFL Intensive', 'TOEFL', 'EXF-889', 'Sun 2:00 PM', 9)
-ON CONFLICT DO NOTHING;
-
--- Sample Assignments
-INSERT INTO "Assignments" ("Title", "ClassName", "DueAtUtc", "QuestionCount", "Status") VALUES
-('SAT Math Practice - Algebra', 'SAT Prep Morning', CURRENT_TIMESTAMP + INTERVAL '2 days', 20, 'Pending'),
-('SAT Reading Comprehension', 'SAT Prep Morning', CURRENT_TIMESTAMP + INTERVAL '5 days', 15, 'Pending'),
-('ACT Science Reasoning', 'ACT Weekend Intensive', CURRENT_TIMESTAMP + INTERVAL '3 days', 25, 'In Progress'),
-('IELTS Writing Task 2 - Opinion Essay', 'IELTS Advanced', CURRENT_TIMESTAMP + INTERVAL '1 day', 5, 'Pending'),
-('SAT Essay Practice', 'SAT Prep Afternoon', CURRENT_TIMESTAMP - INTERVAL '1 day', 3, 'Completed'),
-('TOEFL Integrated Writing', 'TOEFL Preparation', CURRENT_TIMESTAMP + INTERVAL '4 days', 8, 'Pending')
-ON CONFLICT DO NOTHING;
-
--- Sample Classroom Enrollments
-INSERT INTO "ClassroomEnrollments" ("ClassroomId", "StudentId", "Status") VALUES
-(1, 1, 'Active'), (1, 2, 'Active'), (1, 5, 'Active'), (1, 7, 'Active'),
-(2, 1, 'Active'), (2, 2, 'Active'), (2, 5, 'Active'),
-(3, 4, 'Active'),
-(4, 4, 'Active'),
-(5, 3, 'Active'), (5, 8, 'Active'),
-(6, 6, 'Active')
-ON CONFLICT DO NOTHING;
-
--- Sample Questions
-INSERT INTO "Questions" ("Subject", "Category", "Difficulty", "QuestionType", "QuestionText", "CorrectAnswer", "Points", "CreatedByUserId") VALUES
-('SAT', 'Math - Algebra', 'Medium', 'Multiple Choice', 'If 2x + 5 = 15, what is the value of x?', '5', 1.0, 1),
-('SAT', 'Reading', 'Hard', 'Multiple Choice', 'What is the main theme of the passage?', 'Personal growth through adversity', 1.5, 1),
-('IELTS', 'Writing', 'Medium', 'Essay', 'Some people believe technology has made our lives easier. Discuss both views.', NULL, 5.0, 1),
-('ACT', 'Science', 'Easy', 'Multiple Choice', 'What is the pH of pure water?', '7', 1.0, 1)
-ON CONFLICT DO NOTHING;
-
--- Sample Announcements
-INSERT INTO "Announcements" ("ClassroomId", "Title", "Content", "Priority", "CreatedByUserId") VALUES
-(1, 'Upcoming Mock Exam', 'Full-length SAT practice exam scheduled for next Saturday at 9 AM. Please arrive 15 minutes early.', 'High', 1),
-(1, 'Study Materials Available', 'New practice materials have been uploaded to the resources section.', 'Normal', 1),
-(3, 'Class Rescheduled', 'Monday class moved to Tuesday this week due to holiday.', 'Urgent', 1)
-ON CONFLICT DO NOTHING;
+-- This schema intentionally does not insert sample records.
 
 -- ============================================
 -- Notes:
@@ -330,10 +274,9 @@ ON CONFLICT DO NOTHING;
 -- 6. Uses TIMESTAMP for dates, BOOLEAN for flags
 -- 7. Uses CURRENT_TIMESTAMP instead of datetime('now')
 -- 8. Uses INTERVAL for date arithmetic
--- 9. Uses ON CONFLICT DO NOTHING to prevent duplicate seed data
--- 10. Subjects (SAT, IELTS, etc.) are managed in frontend localStorage, not database
--- 11. User passwords are hashed using Argon2id algorithm
--- 12. Invite codes are auto-generated in format EXF-XXX
+-- 9. Subjects (SAT, IELTS, etc.) are managed in frontend localStorage, not database
+-- 10. User passwords are hashed using Argon2id algorithm
+-- 11. Invite codes are auto-generated in format EXF-XXX
 --
 -- TABLE SUMMARY:
 -- Core Tables:
