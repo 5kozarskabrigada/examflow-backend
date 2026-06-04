@@ -15,6 +15,35 @@ var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteLo
 var useSqliteLocal = builder.Environment.IsDevelopment() &&
     (builder.Configuration.GetValue<bool>("UseSqliteLocal") || string.IsNullOrWhiteSpace(connectionString));
 
+// Npgsql's UseNpgsql() requires key=value format, not URI format.
+// Convert postgresql://user:pass@host/db?sslmode=require → Host=...;Username=...;...
+static string NormalizeConnectionString(string cs)
+{
+    if (string.IsNullOrWhiteSpace(cs) ||
+        (!cs.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase) &&
+         !cs.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)))
+        return cs;
+    var uri = new Uri(cs);
+    var userInfo = uri.UserInfo.Split(':');
+    var user = Uri.UnescapeDataString(userInfo[0]);
+    var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    var db = uri.AbsolutePath.TrimStart('/');
+    var sslMode = "Require";
+    if (!string.IsNullOrEmpty(uri.Query))
+    {
+        foreach (var part in uri.Query.TrimStart('?').Split('&'))
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length == 2 && kv[0].Equals("sslmode", StringComparison.OrdinalIgnoreCase))
+                sslMode = kv[1];
+        }
+    }
+    var port = uri.Port > 0 ? uri.Port : 5432;
+    return $"Host={uri.Host};Port={port};Database={db};Username={user};Password={pass};SSL Mode={sslMode};Trust Server Certificate=true;";
+}
+
+connectionString = NormalizeConnectionString(connectionString!);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     if (useSqliteLocal)
