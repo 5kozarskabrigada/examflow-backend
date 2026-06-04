@@ -109,23 +109,18 @@ jobs:
             COMPOSE_FILE="docker-compose.hetzner.yml"
           fi
 
-          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" bash -s << SSHEOF
-set -e
-cd /opt/examflow-backend
-git config --global --add safe.directory /opt/examflow-backend
-git pull origin main
-
-cat > .env << 'ENVVARS'
-NEON_CONNECTION_STRING=${NEON_CONNECTION_STRING}
-FRONTEND_ORIGIN=${FRONTEND_ORIGIN}
-API_DOMAIN=${API_DOMAIN}
-ENVVARS
-
-OTHER_FILE="docker-compose.hetzner.yml"
-if [ "${COMPOSE_FILE}" = "docker-compose.hetzner.yml" ]; then
-  OTHER_FILE="docker-compose.nodomain.yml"
-fi
-docker compose -f ${COMPOSE_FILE} -f /dev/null down -f \$OTHER_FILE --remove-orphans 2>/dev/null || docker compose -f \$OTHER_FILE down --remove-orphans 2>/dev/null || true
-docker compose -f ${COMPOSE_FILE} up -d --build --remove-orphans
-docker image prune -f
-SSHEOF
+          printf '%s\n' \
+            'set -e' \
+            'cd /opt/examflow-backend' \
+            'git config --global --add safe.directory /opt/examflow-backend' \
+            'git pull origin main' \
+            "COMPOSE_FILE=\"${COMPOSE_FILE}\"" \
+            "printf 'NEON_CONNECTION_STRING=%s\\nFRONTEND_ORIGIN=%s\\nAPI_DOMAIN=%s\\n' \"$NEON_CONNECTION_STRING\" \"$FRONTEND_ORIGIN\" \"$API_DOMAIN\" > .env" \
+            'OTHER_FILE="docker-compose.hetzner.yml"' \
+            'if [ "${COMPOSE_FILE}" = "docker-compose.hetzner.yml" ]; then' \
+            '  OTHER_FILE="docker-compose.nodomain.yml"' \
+            'fi' \
+            'docker compose -f "${OTHER_FILE}" down --remove-orphans 2>/dev/null || true' \
+            'docker compose -f "${COMPOSE_FILE}" up -d --build --remove-orphans' \
+            'docker image prune -f' \
+          | ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/id_ed25519 -p "$PORT" "$USERNAME@$HOST" bash -s
