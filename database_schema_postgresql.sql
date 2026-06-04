@@ -134,21 +134,17 @@ CREATE INDEX IF NOT EXISTS "idx_submissions_status" ON "AssignmentSubmissions"("
 -- ============================================
 CREATE TABLE IF NOT EXISTS "MockExams" (
     "Id" SERIAL PRIMARY KEY,
-    "Title" VARCHAR(200) NOT NULL,
     "Subject" VARCHAR(64) NOT NULL,
-    "ExamType" VARCHAR(64) NOT NULL,
-    "DurationMinutes" INTEGER NOT NULL,
-    "TotalQuestions" INTEGER NOT NULL,
-    "TotalPoints" REAL NOT NULL,
-    "Instructions" TEXT,
-    "IsPublished" BOOLEAN NOT NULL DEFAULT FALSE,
-    "CreatedByUserId" INTEGER NOT NULL,
-    "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("CreatedByUserId") REFERENCES "Users"("Id") ON DELETE CASCADE
+    "Title" VARCHAR(250) NOT NULL,
+    "ClassName" VARCHAR(150) NOT NULL,
+    "StructureText" VARCHAR(1000),
+    "ScheduledForUtc" TIMESTAMP,
+    "Status" VARCHAR(32) NOT NULL DEFAULT 'Draft',
+    "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS "idx_mockexams_subject" ON "MockExams"("Subject");
-CREATE INDEX IF NOT EXISTS "idx_mockexams_creator" ON "MockExams"("CreatedByUserId");
+CREATE INDEX IF NOT EXISTS "idx_mockexams_status" ON "MockExams"("Status");
 
 -- ============================================
 -- Table: MockExamAttempts
@@ -202,18 +198,13 @@ CREATE INDEX IF NOT EXISTS "idx_questions_difficulty" ON "Questions"("Difficulty
 -- ============================================
 CREATE TABLE IF NOT EXISTS "Announcements" (
     "Id" SERIAL PRIMARY KEY,
-    "ClassroomId" INTEGER NOT NULL,
-    "Title" VARCHAR(200) NOT NULL,
-    "Content" TEXT NOT NULL,
-    "Priority" VARCHAR(20) NOT NULL DEFAULT 'Normal' CHECK("Priority" IN ('Low', 'Normal', 'High', 'Urgent')),
-    "PublishedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "CreatedByUserId" INTEGER NOT NULL,
-    FOREIGN KEY ("ClassroomId") REFERENCES "Classrooms"("Id") ON DELETE CASCADE,
-    FOREIGN KEY ("CreatedByUserId") REFERENCES "Users"("Id") ON DELETE CASCADE
+    "Title" VARCHAR(250) NOT NULL,
+    "Audience" VARCHAR(150) NOT NULL,
+    "State" VARCHAR(32) NOT NULL DEFAULT 'Sent',
+    "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS "idx_announcements_classroom" ON "Announcements"("ClassroomId");
-CREATE INDEX IF NOT EXISTS "idx_announcements_priority" ON "Announcements"("Priority");
+CREATE INDEX IF NOT EXISTS "idx_announcements_created" ON "Announcements"("CreatedAtUtc");
 
 -- ============================================
 -- Table: CalendarEvents
@@ -221,20 +212,13 @@ CREATE INDEX IF NOT EXISTS "idx_announcements_priority" ON "Announcements"("Prio
 -- ============================================
 CREATE TABLE IF NOT EXISTS "CalendarEvents" (
     "Id" SERIAL PRIMARY KEY,
-    "Title" VARCHAR(200) NOT NULL,
-    "Description" TEXT,
-    "EventType" VARCHAR(20) NOT NULL CHECK("EventType" IN ('Class', 'Exam', 'Assignment', 'Holiday', 'Other')),
-    "StartDateTimeUtc" TIMESTAMP NOT NULL,
-    "EndDateTimeUtc" TIMESTAMP NOT NULL,
-    "ClassroomId" INTEGER,
-    "CreatedByUserId" INTEGER NOT NULL,
-    "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("ClassroomId") REFERENCES "Classrooms"("Id") ON DELETE CASCADE,
-    FOREIGN KEY ("CreatedByUserId") REFERENCES "Users"("Id") ON DELETE CASCADE
+    "Title" VARCHAR(250) NOT NULL,
+    "EventType" VARCHAR(100) NOT NULL,
+    "StartsAtUtc" TIMESTAMP NOT NULL,
+    "CreatedAtUtc" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS "idx_events_classroom" ON "CalendarEvents"("ClassroomId");
-CREATE INDEX IF NOT EXISTS "idx_events_date" ON "CalendarEvents"("StartDateTimeUtc");
+CREATE INDEX IF NOT EXISTS "idx_events_date" ON "CalendarEvents"("StartsAtUtc");
 CREATE INDEX IF NOT EXISTS "idx_events_type" ON "CalendarEvents"("EventType");
 
 -- ============================================

@@ -303,6 +303,37 @@ api.MapPost("/assignments", async (AppDbContext db, Assignment input) =>
     return Results.Created($"/api/assignments/{input.Id}", input);
 });
 
+api.MapPut("/assignments/{id:int}", async (int id, AppDbContext db, Assignment input) =>
+{
+    var existing = await db.Assignments.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Assignment not found." });
+    }
+
+    existing.Title = input.Title.Trim();
+    existing.ClassName = input.ClassName.Trim();
+    existing.DueAtUtc = input.DueAtUtc;
+    existing.QuestionCount = input.QuestionCount;
+    existing.Status = input.Status.Trim();
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapDelete("/assignments/{id:int}", async (int id, AppDbContext db) =>
+{
+    var existing = await db.Assignments.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Assignment not found." });
+    }
+
+    db.Assignments.Remove(existing);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
 api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
 {
     var query = db.Questions.AsQueryable();
@@ -428,6 +459,155 @@ api.MapPost("/classrooms", async (AppDbContext db, Classroom input) =>
     db.Classrooms.Add(input);
     await db.SaveChangesAsync();
     return Results.Created($"/api/classrooms/{input.Id}", input);
+});
+
+api.MapGet("/mock-exams", async (HttpRequest request, AppDbContext db) =>
+{
+    var query = db.MockExams.AsQueryable();
+    var subject = request.Query["subject"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(subject))
+    {
+        query = query.Where(x => x.Subject.ToLower() == subject.ToLower());
+    }
+
+    var mockExams = await query
+        .OrderByDescending(x => x.CreatedAtUtc)
+        .Take(250)
+        .ToListAsync();
+
+    return Results.Ok(mockExams);
+});
+
+api.MapPost("/mock-exams", async (AppDbContext db, MockExam input) =>
+{
+    input.CreatedAtUtc = DateTime.UtcNow;
+    db.MockExams.Add(input);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/mock-exams/{input.Id}", input);
+});
+
+api.MapPut("/mock-exams/{id:int}", async (int id, AppDbContext db, MockExam input) =>
+{
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    existing.Subject = input.Subject.Trim();
+    existing.Title = input.Title.Trim();
+    existing.ClassName = input.ClassName.Trim();
+    existing.StructureText = input.StructureText;
+    existing.ScheduledForUtc = input.ScheduledForUtc;
+    existing.Status = input.Status.Trim();
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapDelete("/mock-exams/{id:int}", async (int id, AppDbContext db) =>
+{
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    db.MockExams.Remove(existing);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+api.MapGet("/announcements", async (AppDbContext db) =>
+{
+    var announcements = await db.Announcements
+        .OrderByDescending(x => x.CreatedAtUtc)
+        .Take(250)
+        .ToListAsync();
+    return Results.Ok(announcements);
+});
+
+api.MapPost("/announcements", async (AppDbContext db, Announcement input) =>
+{
+    input.CreatedAtUtc = DateTime.UtcNow;
+    db.Announcements.Add(input);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/announcements/{input.Id}", input);
+});
+
+api.MapPut("/announcements/{id:int}", async (int id, AppDbContext db, Announcement input) =>
+{
+    var existing = await db.Announcements.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Announcement not found." });
+    }
+
+    existing.Title = input.Title.Trim();
+    existing.Audience = input.Audience.Trim();
+    existing.State = input.State.Trim();
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapDelete("/announcements/{id:int}", async (int id, AppDbContext db) =>
+{
+    var existing = await db.Announcements.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Announcement not found." });
+    }
+
+    db.Announcements.Remove(existing);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+api.MapGet("/calendar-events", async (AppDbContext db) =>
+{
+    var events = await db.CalendarEvents
+        .OrderBy(x => x.StartsAtUtc)
+        .Take(250)
+        .ToListAsync();
+    return Results.Ok(events);
+});
+
+api.MapPost("/calendar-events", async (AppDbContext db, CalendarEvent input) =>
+{
+    input.CreatedAtUtc = DateTime.UtcNow;
+    db.CalendarEvents.Add(input);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/calendar-events/{input.Id}", input);
+});
+
+api.MapPut("/calendar-events/{id:int}", async (int id, AppDbContext db, CalendarEvent input) =>
+{
+    var existing = await db.CalendarEvents.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Calendar event not found." });
+    }
+
+    existing.Title = input.Title.Trim();
+    existing.EventType = input.EventType.Trim();
+    existing.StartsAtUtc = input.StartsAtUtc;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapDelete("/calendar-events/{id:int}", async (int id, AppDbContext db) =>
+{
+    var existing = await db.CalendarEvents.FirstOrDefaultAsync(x => x.Id == id);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Calendar event not found." });
+    }
+
+    db.CalendarEvents.Remove(existing);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
 });
 
 api.MapGet("/dashboard/stats", async (AppDbContext db) =>

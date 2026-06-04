@@ -9,6 +9,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Classroom> Classrooms => Set<Classroom>();
     public DbSet<Question> Questions => Set<Question>();
+    public DbSet<MockExam> MockExams => Set<MockExam>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
@@ -54,6 +57,32 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasIndex(x => x.Subject);
             entity.HasIndex(x => x.Category);
             entity.HasIndex(x => x.Difficulty);
+        });
+
+        modelBuilder.Entity<MockExam>(entity =>
+        {
+            entity.Property(x => x.Subject).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Title).HasMaxLength(250).IsRequired();
+            entity.Property(x => x.ClassName).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.StructureText).HasMaxLength(1000);
+            entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
+            entity.HasIndex(x => x.Subject);
+            entity.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.Property(x => x.Title).HasMaxLength(250).IsRequired();
+            entity.Property(x => x.Audience).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.State).HasMaxLength(32).IsRequired();
+            entity.HasIndex(x => x.CreatedAtUtc);
+        });
+
+        modelBuilder.Entity<CalendarEvent>(entity =>
+        {
+            entity.Property(x => x.Title).HasMaxLength(250).IsRequired();
+            entity.Property(x => x.EventType).HasMaxLength(100).IsRequired();
+            entity.HasIndex(x => x.StartsAtUtc);
         });
 
         modelBuilder.Entity<AppUser>(entity =>

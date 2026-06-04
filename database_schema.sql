@@ -132,21 +132,17 @@ CREATE INDEX IF NOT EXISTS idx_submissions_status ON AssignmentSubmissions(Statu
 -- ============================================
 CREATE TABLE IF NOT EXISTS MockExams (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    Title TEXT NOT NULL,
     Subject TEXT NOT NULL,
-    ExamType TEXT NOT NULL,
-    DurationMinutes INTEGER NOT NULL,
-    TotalQuestions INTEGER NOT NULL,
-    TotalPoints REAL NOT NULL,
-    Instructions TEXT,
-    IsPublished INTEGER NOT NULL DEFAULT 0,
-    CreatedByUserId INTEGER NOT NULL,
-    CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id) ON DELETE CASCADE
+    Title TEXT NOT NULL,
+    ClassName TEXT NOT NULL,
+    StructureText TEXT,
+    ScheduledForUtc TEXT,
+    Status TEXT NOT NULL DEFAULT 'Draft',
+    CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_mockexams_subject ON MockExams(Subject);
-CREATE INDEX IF NOT EXISTS idx_mockexams_creator ON MockExams(CreatedByUserId);
+CREATE INDEX IF NOT EXISTS idx_mockexams_status ON MockExams(Status);
 
 -- ============================================
 -- Table: MockExamAttempts
@@ -200,18 +196,13 @@ CREATE INDEX IF NOT EXISTS idx_questions_difficulty ON Questions(Difficulty);
 -- ============================================
 CREATE TABLE IF NOT EXISTS Announcements (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ClassroomId INTEGER NOT NULL,
     Title TEXT NOT NULL,
-    Content TEXT NOT NULL,
-    Priority TEXT NOT NULL DEFAULT 'Normal' CHECK(Priority IN ('Low', 'Normal', 'High', 'Urgent')),
-    PublishedAtUtc TEXT NOT NULL DEFAULT (datetime('now')),
-    CreatedByUserId INTEGER NOT NULL,
-    FOREIGN KEY (ClassroomId) REFERENCES Classrooms(Id) ON DELETE CASCADE,
-    FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id) ON DELETE CASCADE
+    Audience TEXT NOT NULL,
+    State TEXT NOT NULL DEFAULT 'Sent',
+    CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_announcements_classroom ON Announcements(ClassroomId);
-CREATE INDEX IF NOT EXISTS idx_announcements_priority ON Announcements(Priority);
+CREATE INDEX IF NOT EXISTS idx_announcements_created ON Announcements(CreatedAtUtc);
 
 -- ============================================
 -- Table: CalendarEvents
@@ -220,19 +211,12 @@ CREATE INDEX IF NOT EXISTS idx_announcements_priority ON Announcements(Priority)
 CREATE TABLE IF NOT EXISTS CalendarEvents (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     Title TEXT NOT NULL,
-    Description TEXT,
-    EventType TEXT NOT NULL CHECK(EventType IN ('Class', 'Exam', 'Assignment', 'Holiday', 'Other')),
-    StartDateTimeUtc TEXT NOT NULL,
-    EndDateTimeUtc TEXT NOT NULL,
-    ClassroomId INTEGER,
-    CreatedByUserId INTEGER NOT NULL,
-    CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (ClassroomId) REFERENCES Classrooms(Id) ON DELETE CASCADE,
-    FOREIGN KEY (CreatedByUserId) REFERENCES Users(Id) ON DELETE CASCADE
+    EventType TEXT NOT NULL,
+    StartsAtUtc TEXT NOT NULL,
+    CreatedAtUtc TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_events_classroom ON CalendarEvents(ClassroomId);
-CREATE INDEX IF NOT EXISTS idx_events_date ON CalendarEvents(StartDateTimeUtc);
+CREATE INDEX IF NOT EXISTS idx_events_date ON CalendarEvents(StartsAtUtc);
 CREATE INDEX IF NOT EXISTS idx_events_type ON CalendarEvents(EventType);
 
 -- ============================================
