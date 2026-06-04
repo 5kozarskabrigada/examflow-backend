@@ -15,8 +15,7 @@ var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteLo
 var useSqliteLocal = builder.Environment.IsDevelopment() &&
     (builder.Configuration.GetValue<bool>("UseSqliteLocal") || string.IsNullOrWhiteSpace(connectionString));
 
-// Npgsql's UseNpgsql() requires key=value format, not URI format.
-// Convert postgresql://user:pass@host/db?sslmode=require → Host=...;Username=...;...
+// Accept URI-style Postgres connection strings by normalizing them through Npgsql.
 static string NormalizeConnectionString(string cs)
 {
     if (string.IsNullOrWhiteSpace(cs) ||
@@ -39,7 +38,20 @@ static string NormalizeConnectionString(string cs)
         }
     }
     var port = uri.Port > 0 ? uri.Port : 5432;
-    return $"Host={uri.Host};Port={port};Database={db};Username={user};Password={pass};SSL Mode={sslMode};Trust Server Certificate=true;";
+
+    var builder = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = port,
+        Database = db,
+        Username = user,
+        Password = pass,
+        SslMode = Enum.TryParse<Npgsql.SslMode>(sslMode, true, out var parsedSslMode)
+            ? parsedSslMode
+            : Npgsql.SslMode.Require,
+    };
+
+    return builder.ConnectionString;
 }
 
 connectionString = NormalizeConnectionString(connectionString!);
