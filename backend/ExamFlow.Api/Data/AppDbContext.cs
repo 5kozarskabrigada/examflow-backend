@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<Classroom> Classrooms => Set<Classroom>();
+    public DbSet<Question> Questions => Set<Question>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
@@ -36,6 +37,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.InviteCode).HasMaxLength(32);
             entity.Property(x => x.Schedule).HasMaxLength(100);
             entity.HasIndex(x => x.InviteCode).IsUnique();
+        });
+
+        modelBuilder.Entity<Question>(entity =>
+        {
+            entity.Property(x => x.Subject).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.Category).HasMaxLength(100).IsRequired();
+            entity.Property(x => x.Difficulty).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.QuestionType).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.QuestionText).HasMaxLength(4000).IsRequired();
+            entity.Property(x => x.OptionsJson).HasMaxLength(4000);
+            entity.Property(x => x.CorrectAnswer).HasMaxLength(1000);
+            entity.Property(x => x.ExplanationText).HasMaxLength(4000);
+            entity.Property(x => x.Points).HasPrecision(10, 2);
+            entity.HasIndex(x => x.Subject);
+            entity.HasIndex(x => x.Category);
+            entity.HasIndex(x => x.Difficulty);
         });
 
         modelBuilder.Entity<AppUser>(entity =>

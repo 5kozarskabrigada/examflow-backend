@@ -129,6 +129,26 @@ using (var scope = app.Services.CreateScope())
 
             CREATE INDEX IF NOT EXISTS ""IX_AuthSessions_UserId"" ON ""AuthSessions"" (""UserId"");
         ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Questions"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Subject"" VARCHAR(64) NOT NULL,
+                ""Category"" VARCHAR(100) NOT NULL,
+                ""Difficulty"" VARCHAR(20) NOT NULL,
+                ""QuestionType"" VARCHAR(50) NOT NULL,
+                ""QuestionText"" VARCHAR(4000) NOT NULL,
+                ""OptionsJson"" VARCHAR(4000),
+                ""CorrectAnswer"" VARCHAR(1000),
+                ""ExplanationText"" VARCHAR(4000),
+                ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Difficulty"" ON ""Questions"" (""Difficulty"");
+        ");
     }
 }
 
@@ -280,6 +300,55 @@ api.MapPost("/assignments", async (AppDbContext db, Assignment input) =>
     return Results.Created($"/api/assignments/{input.Id}", input);
 });
 
+api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
+{
+    var query = db.Questions.AsQueryable();
+
+    var subject = request.Query["subject"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(subject))
+    {
+        query = query.Where(x => x.Subject.ToLower() == subject.ToLower());
+    }
+
+    var category = request.Query["category"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(category))
+    {
+        query = query.Where(x => x.Category.ToLower().Contains(category.ToLower()));
+    }
+
+    var difficulty = request.Query["difficulty"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(difficulty))
+    {
+        query = query.Where(x => x.Difficulty.ToLower() == difficulty.ToLower());
+    }
+
+    var search = request.Query["search"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+        query = query.Where(x =>
+            x.QuestionText.ToLower().Contains(search.ToLower()) ||
+            x.Category.ToLower().Contains(search.ToLower()) ||
+            x.QuestionType.ToLower().Contains(search.ToLower()));
+    }
+
+    var questions = await query
+        .OrderBy(x => x.Subject)
+        .ThenBy(x => x.Category)
+        .ThenByDescending(x => x.CreatedAtUtc)
+        .Take(250)
+        .ToListAsync();
+
+    return Results.Ok(questions);
+});
+
+api.MapPost("/questions", async (AppDbContext db, Question input) =>
+{
+    input.CreatedAtUtc = DateTime.UtcNow;
+    db.Questions.Add(input);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/questions/{input.Id}", input);
+});
+
 // Classroom endpoints
 api.MapGet("/classrooms", async (AppDbContext db) =>
 {
@@ -423,7 +492,24 @@ api.MapPost("/seed-data", async (AppDbContext db) =>
     db.Classrooms.AddRange(classrooms);
     await db.SaveChangesAsync();
 
-    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length, classrooms = classrooms.Length });
+    // Seed questions
+    var questions = new[]
+    {
+        new Question { Subject = "SAT", Category = "Reading", Difficulty = "Medium", QuestionType = "MCQ · 4 options", QuestionText = "The primary purpose of the passage is to challenge the assumption that urban growth always lowers quality of life.", CorrectAnswer = "To challenge a common assumption", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "SAT", Category = "Math", Difficulty = "Easy", QuestionType = "MCQ · 4 options", QuestionText = "If 3x + 5 = 20, what value of x satisfies the equation?", CorrectAnswer = "5", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "SAT", Category = "Writing", Difficulty = "Hard", QuestionType = "MCQ · 4 options", QuestionText = "Which option most effectively combines the underlined sentences while preserving meaning?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "IELTS", Category = "Writing", Difficulty = "Hard", QuestionType = "Essay · Task 2", QuestionText = "Some people believe that modern technology has made daily life more complex than before. Discuss both views.", Points = 5m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "IELTS", Category = "Reading", Difficulty = "Medium", QuestionType = "True/False/Not Given", QuestionText = "The passage suggests that the main reason for policy change was pressure from local communities.", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "IELTS", Category = "Speaking", Difficulty = "Medium", QuestionType = "Cue card · Part 2", QuestionText = "Describe a time when you had to adapt to a new situation quickly.", Points = 3m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "CSCA", Category = "Training Science", Difficulty = "Medium", QuestionType = "MCQ · 4 options", QuestionText = "Which energy system contributes most during repeated 10-second maximal sprint intervals with short rest periods?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "CSCA", Category = "Program Design", Difficulty = "Hard", QuestionType = "Short answer", QuestionText = "Design a 4-week progression for an intermediate athlete focused on lower-body power output.", Points = 4m, CreatedAtUtc = DateTime.UtcNow },
+        new Question { Subject = "CSCA", Category = "Testing", Difficulty = "Easy", QuestionType = "MCQ · 4 options", QuestionText = "Which field test is most appropriate for estimating lower-body explosive power in volleyball athletes?", Points = 1m, CreatedAtUtc = DateTime.UtcNow },
+    };
+
+    db.Questions.AddRange(questions);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length, classrooms = classrooms.Length, questions = questions.Length });
 });
 
 app.Run();
