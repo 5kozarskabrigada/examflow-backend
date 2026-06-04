@@ -280,6 +280,97 @@ api.MapPost("/assignments", async (AppDbContext db, Assignment input) =>
     return Results.Created($"/api/assignments/{input.Id}", input);
 });
 
+// Seed data endpoint for development/testing
+api.MapPost("/seed-data", async (AppDbContext db) =>
+{
+    // Check if data already exists
+    var existingStudents = await db.Students.CountAsync();
+    if (existingStudents > 0)
+    {
+        return Results.Ok(new { message = "Data already seeded", students = existingStudents });
+    }
+
+    // Seed students
+    var students = new[]
+    {
+        new Student { FullName = "Emma Johnson", Email = "emma.johnson@example.com", ExamGoal = "SAT", TargetScore = "1500", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Liam Smith", Email = "liam.smith@example.com", ExamGoal = "SAT", TargetScore = "1450", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Olivia Brown", Email = "olivia.brown@example.com", ExamGoal = "ACT", TargetScore = "34", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Noah Davis", Email = "noah.davis@example.com", ExamGoal = "IELTS", TargetScore = "7.5", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Ava Wilson", Email = "ava.wilson@example.com", ExamGoal = "SAT", TargetScore = "1400", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Ethan Martinez", Email = "ethan.martinez@example.com", ExamGoal = "TOEFL", TargetScore = "110", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Sophia Anderson", Email = "sophia.anderson@example.com", ExamGoal = "SAT", TargetScore = "1550", CreatedAtUtc = DateTime.UtcNow },
+        new Student { FullName = "Mason Taylor", Email = "mason.taylor@example.com", ExamGoal = "ACT", TargetScore = "32", CreatedAtUtc = DateTime.UtcNow },
+    };
+
+    db.Students.AddRange(students);
+    await db.SaveChangesAsync();
+
+    // Seed assignments
+    var assignments = new[]
+    {
+        new Assignment 
+        { 
+            Title = "SAT Math Practice - Algebra", 
+            ClassName = "SAT Prep Morning", 
+            DueAtUtc = DateTime.UtcNow.AddDays(2), 
+            QuestionCount = 20,
+            Status = "Pending",
+            CreatedAtUtc = DateTime.UtcNow 
+        },
+        new Assignment 
+        { 
+            Title = "SAT Reading Comprehension", 
+            ClassName = "SAT Prep Morning", 
+            DueAtUtc = DateTime.UtcNow.AddDays(5), 
+            QuestionCount = 15,
+            Status = "Pending",
+            CreatedAtUtc = DateTime.UtcNow 
+        },
+        new Assignment 
+        { 
+            Title = "ACT Science Reasoning", 
+            ClassName = "ACT Weekend Intensive", 
+            DueAtUtc = DateTime.UtcNow.AddDays(3), 
+            QuestionCount = 25,
+            Status = "In Progress",
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-2) 
+        },
+        new Assignment 
+        { 
+            Title = "IELTS Writing Task 2 - Opinion Essay", 
+            ClassName = "IELTS Advanced", 
+            DueAtUtc = DateTime.UtcNow.AddDays(1), 
+            QuestionCount = 5,
+            Status = "Pending",
+            CreatedAtUtc = DateTime.UtcNow 
+        },
+        new Assignment 
+        { 
+            Title = "SAT Essay Practice", 
+            ClassName = "SAT Prep Afternoon", 
+            DueAtUtc = DateTime.UtcNow.AddDays(-1), 
+            QuestionCount = 3,
+            Status = "Completed",
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-7) 
+        },
+        new Assignment 
+        { 
+            Title = "TOEFL Integrated Writing", 
+            ClassName = "TOEFL Preparation", 
+            DueAtUtc = DateTime.UtcNow.AddDays(4), 
+            QuestionCount = 8,
+            Status = "Pending",
+            CreatedAtUtc = DateTime.UtcNow 
+        },
+    };
+
+    db.Assignments.AddRange(assignments);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length });
+});
+
 app.Run();
 
 static AuthUserResponse ToAuthUser(AppUser user) =>
