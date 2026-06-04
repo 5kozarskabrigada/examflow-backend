@@ -121,6 +121,11 @@ jobs:
           API_DOMAIN=$API_DOMAIN
           ENVVARS
 
-          docker compose -f $COMPOSE_FILE up -d --build
+          OTHER_FILE="docker-compose.hetzner.yml"
+          if [ "$COMPOSE_FILE" = "docker-compose.hetzner.yml" ]; then
+            OTHER_FILE="docker-compose.nodomain.yml"
+          fi
+          docker compose -f $OTHER_FILE down --remove-orphans 2>/dev/null || true
+          docker compose -f $COMPOSE_FILE up -d --build --remove-orphans
           docker image prune -f
           EOF
