@@ -128,6 +128,7 @@ jobs:
             'if [ "${COMPOSE_FILE}" = "docker-compose.hetzner.yml" ]; then' \
             '  OTHER_FILE="docker-compose.nodomain.yml"' \
             'fi' \
+            'docker rm -f examflow-caddy 2>/dev/null || true' \
             'docker compose -f "${OTHER_FILE}" down --remove-orphans 2>/dev/null || true' \
             'docker compose -f "${COMPOSE_FILE}" up -d --build --remove-orphans' \
             'docker image prune -f' \
