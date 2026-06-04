@@ -102,11 +102,19 @@ jobs:
           USERNAME="$(printf '%s' "$HETZNER_USER" | tr -d '\r\n ' )"
           PORT="$(printf '%s' "$HETZNER_SSH_PORT" | tr -d '\r\n ' )"
           API_DOMAIN_CLEAN="$(printf '%s' "$API_DOMAIN" | tr -d '\r\n ' )"
+          API_DOMAIN_HOST="$API_DOMAIN_CLEAN"
+          API_DOMAIN_HOST="${API_DOMAIN_HOST#http://}"
+          API_DOMAIN_HOST="${API_DOMAIN_HOST#https://}"
+          API_DOMAIN_HOST="${API_DOMAIN_HOST#//}"
+          API_DOMAIN_HOST="${API_DOMAIN_HOST%%/*}"
+          API_DOMAIN_HOST="${API_DOMAIN_HOST%%:*}"
 
-          if [ -z "$API_DOMAIN_CLEAN" ] || [[ "$API_DOMAIN_CLEAN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          if [ -z "$API_DOMAIN_HOST" ] || [[ "$API_DOMAIN_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             COMPOSE_FILE="docker-compose.nodomain.yml"
+            echo "Deploy mode: no-domain (${API_DOMAIN_CLEAN:-empty})"
           else
             COMPOSE_FILE="docker-compose.hetzner.yml"
+            echo "Deploy mode: domain (${API_DOMAIN_CLEAN})"
           fi
 
           printf '%s\n' \
