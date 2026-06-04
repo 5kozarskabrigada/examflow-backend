@@ -7,6 +7,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<Classroom> Classrooms => Set<Classroom>();
     public DbSet<AppUser> Users => Set<AppUser>();
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
 
@@ -26,6 +27,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Title).HasMaxLength(250);
             entity.Property(x => x.ClassName).HasMaxLength(150);
             entity.Property(x => x.Status).HasMaxLength(32);
+        });
+
+        modelBuilder.Entity<Classroom>(entity =>
+        {
+            entity.Property(x => x.Name).HasMaxLength(150);
+            entity.Property(x => x.Subject).HasMaxLength(64);
+            entity.Property(x => x.InviteCode).HasMaxLength(32);
+            entity.Property(x => x.Schedule).HasMaxLength(100);
+            entity.HasIndex(x => x.InviteCode).IsUnique();
         });
 
         modelBuilder.Entity<AppUser>(entity =>

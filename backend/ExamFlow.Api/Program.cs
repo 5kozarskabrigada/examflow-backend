@@ -280,6 +280,47 @@ api.MapPost("/assignments", async (AppDbContext db, Assignment input) =>
     return Results.Created($"/api/assignments/{input.Id}", input);
 });
 
+// Classroom endpoints
+api.MapGet("/classrooms", async (AppDbContext db) =>
+{
+    var classrooms = await db.Classrooms
+        .OrderByDescending(c => c.CreatedAtUtc)
+        .ToListAsync();
+
+    return Results.Ok(classrooms);
+});
+
+api.MapPost("/classrooms", async (AppDbContext db, Classroom input) =>
+{
+    input.CreatedAtUtc = DateTime.UtcNow;
+    // Generate invite code if not provided
+    if (string.IsNullOrEmpty(input.InviteCode))
+    {
+        input.InviteCode = $"EXF-{new Random().Next(100, 999)}";
+    }
+    db.Classrooms.Add(input);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/classrooms/{input.Id}", input);
+});
+
+api.MapGet("/dashboard/stats", async (AppDbContext db) =>
+{
+    var totalStudents = await db.Students.CountAsync();
+    var totalClassrooms = await db.Classrooms.CountAsync();
+    var pendingAssignments = await db.Assignments.CountAsync(a => a.Status == "Pending");
+    var completedAssignments = await db.Assignments.CountAsync(a => a.Status == "Completed");
+    var upcomingDueCount = await db.Assignments.CountAsync(a => a.DueAtUtc > DateTime.UtcNow && a.DueAtUtc < DateTime.UtcNow.AddDays(7));
+
+    return Results.Ok(new
+    {
+        totalStudents,
+        totalClassrooms,
+        pendingAssignments,
+        completedAssignments,
+        upcomingDueCount
+    });
+});
+
 // Seed data endpoint for development/testing
 api.MapPost("/seed-data", async (AppDbContext db) =>
 {
@@ -368,7 +409,21 @@ api.MapPost("/seed-data", async (AppDbContext db) =>
     db.Assignments.AddRange(assignments);
     await db.SaveChangesAsync();
 
-    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length });
+    // Seed classrooms
+    var classrooms = new[]
+    {
+        new Classroom { Name = "SAT Core", Subject = "SAT", InviteCode = "EXF-204", Schedule = "Mon/Wed 4:00 PM", StudentCount = 12, CreatedAtUtc = DateTime.UtcNow },
+        new Classroom { Name = "SAT Practice", Subject = "SAT", InviteCode = "EXF-311", Schedule = "Tue/Thu 5:30 PM", StudentCount = 15, CreatedAtUtc = DateTime.UtcNow },
+        new Classroom { Name = "IELTS Core", Subject = "IELTS", InviteCode = "EXF-518", Schedule = "Mon/Fri 3:15 PM", StudentCount = 10, CreatedAtUtc = DateTime.UtcNow },
+        new Classroom { Name = "IELTS Advanced", Subject = "IELTS", InviteCode = "EXF-622", Schedule = "Wed 6:00 PM", StudentCount = 8, CreatedAtUtc = DateTime.UtcNow },
+        new Classroom { Name = "ACT Prep", Subject = "ACT", InviteCode = "EXF-745", Schedule = "Sat 10:00 AM", StudentCount = 14, CreatedAtUtc = DateTime.UtcNow },
+        new Classroom { Name = "TOEFL Intensive", Subject = "TOEFL", InviteCode = "EXF-889", Schedule = "Sun 2:00 PM", StudentCount = 9, CreatedAtUtc = DateTime.UtcNow },
+    };
+
+    db.Classrooms.AddRange(classrooms);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { message = "Data seeded successfully", students = students.Length, assignments = assignments.Length, classrooms = classrooms.Length });
 });
 
 app.Run();
