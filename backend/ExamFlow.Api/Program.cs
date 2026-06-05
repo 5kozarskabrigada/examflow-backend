@@ -165,6 +165,14 @@ using (var scope = app.Services.CreateScope())
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
 
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Subject"" VARCHAR(64) NOT NULL DEFAULT '';
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Title"" VARCHAR(250) NOT NULL DEFAULT '';
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""ClassName"" VARCHAR(150) NOT NULL DEFAULT '';
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""StructureText"" VARCHAR(1000);
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""ScheduledForUtc"" TIMESTAMP WITH TIME ZONE NULL;
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Status"" VARCHAR(32) NOT NULL DEFAULT 'Draft';
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Subject"" ON ""MockExams"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Status"" ON ""MockExams"" (""Status"");
         ");
