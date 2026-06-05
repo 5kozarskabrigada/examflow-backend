@@ -211,6 +211,50 @@ using (var scope = app.Services.CreateScope())
             CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_StartsAtUtc"" ON ""CalendarEvents"" (""StartsAtUtc"");
             CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_EventType"" ON ""CalendarEvents"" (""EventType"");
         ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Students"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""FullName"" VARCHAR(200) NOT NULL,
+                ""Email"" VARCHAR(320) NOT NULL UNIQUE,
+                ""ExamGoal"" VARCHAR(100),
+                ""TargetScore"" VARCHAR(50),
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Students_Email"" ON ""Students"" (""Email"");
+        ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Classrooms"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Name"" VARCHAR(150) NOT NULL,
+                ""Subject"" VARCHAR(64) NOT NULL,
+                ""InviteCode"" VARCHAR(32) NOT NULL UNIQUE,
+                ""Schedule"" VARCHAR(100),
+                ""StudentCount"" INTEGER NOT NULL DEFAULT 0,
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Classrooms_InviteCode"" ON ""Classrooms"" (""InviteCode"");
+            CREATE INDEX IF NOT EXISTS ""IX_Classrooms_Subject"" ON ""Classrooms"" (""Subject"");
+        ");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            CREATE TABLE IF NOT EXISTS ""Assignments"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""Title"" VARCHAR(250) NOT NULL,
+                ""ClassName"" VARCHAR(150) NOT NULL,
+                ""DueAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL,
+                ""QuestionCount"" INTEGER NOT NULL DEFAULT 0,
+                ""Status"" VARCHAR(32) NOT NULL DEFAULT 'Pending',
+                ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ""IX_Assignments_ClassName"" ON ""Assignments"" (""ClassName"");
+            CREATE INDEX IF NOT EXISTS ""IX_Assignments_Status"" ON ""Assignments"" (""Status"");
+            CREATE INDEX IF NOT EXISTS ""IX_Assignments_DueAtUtc"" ON ""Assignments"" (""DueAtUtc"");
+        ");
     }
 }
 
@@ -356,6 +400,9 @@ api.MapGet("/assignments", async (AppDbContext db) =>
 
 api.MapPost("/assignments", async (AppDbContext db, Assignment input) =>
 {
+    input.DueAtUtc = input.DueAtUtc.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind(input.DueAtUtc, DateTimeKind.Utc)
+        : input.DueAtUtc.ToUniversalTime();
     input.CreatedAtUtc = DateTime.UtcNow;
     db.Assignments.Add(input);
     await db.SaveChangesAsync();
@@ -372,7 +419,9 @@ api.MapPut("/assignments/{id:int}", async (int id, AppDbContext db, Assignment i
 
     existing.Title = input.Title.Trim();
     existing.ClassName = input.ClassName.Trim();
-    existing.DueAtUtc = input.DueAtUtc;
+    existing.DueAtUtc = input.DueAtUtc.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind(input.DueAtUtc, DateTimeKind.Utc)
+        : input.DueAtUtc.ToUniversalTime();
     existing.QuestionCount = input.QuestionCount;
     existing.Status = input.Status.Trim();
 
@@ -539,6 +588,12 @@ api.MapGet("/mock-exams", async (HttpRequest request, AppDbContext db) =>
 
 api.MapPost("/mock-exams", async (AppDbContext db, MockExam input) =>
 {
+    if (input.ScheduledForUtc.HasValue)
+    {
+        input.ScheduledForUtc = input.ScheduledForUtc.Value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(input.ScheduledForUtc.Value, DateTimeKind.Utc)
+            : input.ScheduledForUtc.Value.ToUniversalTime();
+    }
     input.CreatedAtUtc = DateTime.UtcNow;
     db.MockExams.Add(input);
     await db.SaveChangesAsync();
@@ -557,7 +612,11 @@ api.MapPut("/mock-exams/{id:int}", async (int id, AppDbContext db, MockExam inpu
     existing.Title = input.Title.Trim();
     existing.ClassName = input.ClassName.Trim();
     existing.StructureText = input.StructureText;
-    existing.ScheduledForUtc = input.ScheduledForUtc;
+    existing.ScheduledForUtc = input.ScheduledForUtc.HasValue
+        ? (input.ScheduledForUtc.Value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(input.ScheduledForUtc.Value, DateTimeKind.Utc)
+            : input.ScheduledForUtc.Value.ToUniversalTime())
+        : input.ScheduledForUtc;
     existing.Status = input.Status.Trim();
 
     await db.SaveChangesAsync();
@@ -634,6 +693,9 @@ api.MapGet("/calendar-events", async (AppDbContext db) =>
 
 api.MapPost("/calendar-events", async (AppDbContext db, CalendarEvent input) =>
 {
+    input.StartsAtUtc = input.StartsAtUtc.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind(input.StartsAtUtc, DateTimeKind.Utc)
+        : input.StartsAtUtc.ToUniversalTime();
     input.CreatedAtUtc = DateTime.UtcNow;
     db.CalendarEvents.Add(input);
     await db.SaveChangesAsync();
@@ -650,7 +712,9 @@ api.MapPut("/calendar-events/{id:int}", async (int id, AppDbContext db, Calendar
 
     existing.Title = input.Title.Trim();
     existing.EventType = input.EventType.Trim();
-    existing.StartsAtUtc = input.StartsAtUtc;
+    existing.StartsAtUtc = input.StartsAtUtc.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind(input.StartsAtUtc, DateTimeKind.Utc)
+        : input.StartsAtUtc.ToUniversalTime();
 
     await db.SaveChangesAsync();
     return Results.Ok(existing);
