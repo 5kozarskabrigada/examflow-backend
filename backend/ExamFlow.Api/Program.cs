@@ -186,6 +186,11 @@ using (var scope = app.Services.CreateScope())
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
 
+            ALTER TABLE ""Announcements"" ADD COLUMN IF NOT EXISTS ""Title"" VARCHAR(250) NOT NULL DEFAULT '';
+            ALTER TABLE ""Announcements"" ADD COLUMN IF NOT EXISTS ""Audience"" VARCHAR(150) NOT NULL DEFAULT '';
+            ALTER TABLE ""Announcements"" ADD COLUMN IF NOT EXISTS ""State"" VARCHAR(32) NOT NULL DEFAULT 'Sent';
+            ALTER TABLE ""Announcements"" ADD COLUMN IF NOT EXISTS ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+
             CREATE INDEX IF NOT EXISTS ""IX_Announcements_CreatedAtUtc"" ON ""Announcements"" (""CreatedAtUtc"");
         ");
 
@@ -197,6 +202,11 @@ using (var scope = app.Services.CreateScope())
                 ""StartsAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
+
+            ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""Title"" VARCHAR(250) NOT NULL DEFAULT '';
+            ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""EventType"" VARCHAR(100) NOT NULL DEFAULT '';
+            ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""StartsAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+            ALTER TABLE ""CalendarEvents"" ADD COLUMN IF NOT EXISTS ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
 
             CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_StartsAtUtc"" ON ""CalendarEvents"" (""StartsAtUtc"");
             CREATE INDEX IF NOT EXISTS ""IX_CalendarEvents_EventType"" ON ""CalendarEvents"" (""EventType"");
