@@ -52,6 +52,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.OptionsJson).HasMaxLength(4000);
             entity.Property(x => x.CorrectAnswer).HasMaxLength(1000);
             entity.Property(x => x.ExplanationText).HasMaxLength(4000);
+            entity.Property(x => x.QuestionData).HasMaxLength(8000);
             entity.Property(x => x.Points).HasPrecision(10, 2);
             entity.Property(x => x.Bookmarked).HasDefaultValue(false);
             entity.HasIndex(x => x.Subject);

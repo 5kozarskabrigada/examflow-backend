@@ -141,12 +141,14 @@ using (var scope = app.Services.CreateScope())
                 ""OptionsJson"" VARCHAR(4000),
                 ""CorrectAnswer"" VARCHAR(1000),
                 ""ExplanationText"" VARCHAR(4000),
+                ""QuestionData"" VARCHAR(8000),
                 ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
                 ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
 
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""QuestionData"" VARCHAR(8000);
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
@@ -513,6 +515,7 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.OptionsJson = input.OptionsJson;
     existing.CorrectAnswer = input.CorrectAnswer;
     existing.ExplanationText = input.ExplanationText;
+    existing.QuestionData = input.QuestionData;
     existing.Points = input.Points;
     existing.Bookmarked = input.Bookmarked;
 
