@@ -64,6 +64,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Source).HasMaxLength(50);
             entity.Property(x => x.Status).HasMaxLength(20);
             entity.Property(x => x.Tags).HasMaxLength(500);
+            entity.Property(x => x.Domain).HasMaxLength(64);
+            entity.Property(x => x.Skill).HasMaxLength(64);
+            entity.Property(x => x.Hint).HasMaxLength(1000);
             entity.Property(x => x.Points).HasPrecision(10, 2);
             entity.Property(x => x.Bookmarked).HasDefaultValue(false);
             entity.HasIndex(x => x.Subject);

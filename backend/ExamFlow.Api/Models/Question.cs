@@ -23,6 +23,15 @@ public class Question
     public string? Source { get; set; }
     public string? Status { get; set; }
     public string? Tags { get; set; }
+    public string? Domain { get; set; }
+    public string? Skill { get; set; }
+    public bool CalculatorAllowed { get; set; }
+    public bool PassageRequired { get; set; }
+    public bool ImageRequired { get; set; }
+    public bool TableRequired { get; set; }
+    public bool GraphRequired { get; set; }
+    public bool EquationRequired { get; set; }
+    public string? Hint { get; set; }
     public decimal Points { get; set; } = 1m;
     public bool Bookmarked { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

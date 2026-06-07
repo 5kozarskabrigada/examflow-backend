@@ -153,6 +153,15 @@ using (var scope = app.Services.CreateScope())
                 ""Source"" VARCHAR(50),
                 ""Status"" VARCHAR(20),
                 ""Tags"" VARCHAR(500),
+                ""Domain"" VARCHAR(64),
+                ""Skill"" VARCHAR(64),
+                ""CalculatorAllowed"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""PassageRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""ImageRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""TableRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""GraphRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
+                ""Hint"" VARCHAR(1000),
                 ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
                 ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
@@ -171,6 +180,15 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Title"" VARCHAR(250);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""ImageUrl"" VARCHAR(1000);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""AudioUrl"" VARCHAR(1000);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Domain"" VARCHAR(64);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Skill"" VARCHAR(64);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CalculatorAllowed"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""PassageRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""ImageRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""TableRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""GraphRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Hint"" VARCHAR(1000);
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
@@ -536,6 +554,24 @@ api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
         query = query.Where(x => x.Status != null && x.Status.ToLower() == status.ToLower());
     }
 
+    var domain = request.Query["domain"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(domain))
+    {
+        query = query.Where(x => x.Domain != null && x.Domain.ToLower() == domain.ToLower());
+    }
+
+    var skill = request.Query["skill"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(skill))
+    {
+        query = query.Where(x => x.Skill != null && x.Skill.ToLower() == skill.ToLower());
+    }
+
+    var calculator = request.Query["calculatorAllowed"].ToString().Trim();
+    if (bool.TryParse(calculator, out var calcValue))
+    {
+        query = query.Where(x => x.CalculatorAllowed == calcValue);
+    }
+
     var questions = await query
         .OrderBy(x => x.Subject)
         .ThenBy(x => x.Category)
@@ -582,6 +618,15 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.Source = input.Source;
     existing.Status = input.Status;
     existing.Tags = input.Tags;
+    existing.Domain = input.Domain;
+    existing.Skill = input.Skill;
+    existing.CalculatorAllowed = input.CalculatorAllowed;
+    existing.PassageRequired = input.PassageRequired;
+    existing.ImageRequired = input.ImageRequired;
+    existing.TableRequired = input.TableRequired;
+    existing.GraphRequired = input.GraphRequired;
+    existing.EquationRequired = input.EquationRequired;
+    existing.Hint = input.Hint;
     existing.Points = input.Points;
     existing.Bookmarked = input.Bookmarked;
 
