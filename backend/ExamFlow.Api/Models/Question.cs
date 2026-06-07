@@ -34,6 +34,7 @@ public class Question
     public bool EquationRequired { get; set; }
     public string? Hint { get; set; }
     public decimal Points { get; set; } = 1m;
+    public int CreatedByUserId { get; set; }
     public bool Bookmarked { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

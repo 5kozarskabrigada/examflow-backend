@@ -183,6 +183,7 @@ using (var scope = app.Services.CreateScope())
                 ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""Hint"" VARCHAR(1000),
                 ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+                ""CreatedByUserId"" INTEGER NOT NULL DEFAULT 0,
                 ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
             );
@@ -210,6 +211,7 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""GraphRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Hint"" VARCHAR(1000);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedByUserId"" INTEGER NOT NULL DEFAULT 0;
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
@@ -608,6 +610,7 @@ api.MapPost("/questions", async (AppDbContext db, Question input) =>
     try
     {
         input.CreatedAtUtc = DateTime.UtcNow;
+        if (input.CreatedByUserId == 0) input.CreatedByUserId = 1;
         db.Questions.Add(input);
         await db.SaveChangesAsync();
         return Results.Created($"/api/questions/{input.Id}", input);
@@ -668,6 +671,7 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.EquationRequired = input.EquationRequired;
     existing.Hint = input.Hint;
     existing.Points = input.Points;
+    existing.CreatedByUserId = input.CreatedByUserId;
     existing.Bookmarked = input.Bookmarked;
 
     await db.SaveChangesAsync();
