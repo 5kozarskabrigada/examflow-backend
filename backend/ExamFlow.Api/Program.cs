@@ -138,6 +138,9 @@ using (var scope = app.Services.CreateScope())
                 ""Difficulty"" VARCHAR(20) NOT NULL,
                 ""QuestionType"" VARCHAR(50) NOT NULL,
                 ""QuestionText"" VARCHAR(4000) NOT NULL,
+                ""Title"" VARCHAR(250),
+                ""ImageUrl"" VARCHAR(1000),
+                ""AudioUrl"" VARCHAR(1000),
                 ""OptionsJson"" VARCHAR(4000),
                 ""CorrectAnswer"" VARCHAR(1000),
                 ""ExplanationText"" VARCHAR(4000),
@@ -165,6 +168,9 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Source"" VARCHAR(50);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Status"" VARCHAR(20);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Tags"" VARCHAR(500);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Title"" VARCHAR(250);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""ImageUrl"" VARCHAR(1000);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""AudioUrl"" VARCHAR(1000);
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
@@ -565,6 +571,9 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.CorrectAnswer = input.CorrectAnswer;
     existing.ExplanationText = input.ExplanationText;
     existing.QuestionData = input.QuestionData;
+    existing.Title = input.Title;
+    existing.ImageUrl = input.ImageUrl;
+    existing.AudioUrl = input.AudioUrl;
     existing.Module = input.Module;
     existing.Topic = input.Topic;
     existing.BandTarget = input.BandTarget;

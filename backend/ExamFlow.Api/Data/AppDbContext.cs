@@ -49,6 +49,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Difficulty).HasMaxLength(20).IsRequired();
             entity.Property(x => x.QuestionType).HasMaxLength(50).IsRequired();
             entity.Property(x => x.QuestionText).HasMaxLength(4000).IsRequired();
+            entity.Property(x => x.Title).HasMaxLength(250);
+            entity.Property(x => x.ImageUrl).HasMaxLength(1000);
+            entity.Property(x => x.AudioUrl).HasMaxLength(1000);
             entity.Property(x => x.OptionsJson).HasMaxLength(4000);
             entity.Property(x => x.CorrectAnswer).HasMaxLength(1000);
             entity.Property(x => x.ExplanationText).HasMaxLength(4000);

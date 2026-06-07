@@ -8,6 +8,9 @@ public class Question
     public required string Difficulty { get; set; }
     public required string QuestionType { get; set; }
     public required string QuestionText { get; set; }
+    public string? Title { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? AudioUrl { get; set; }
     public string? OptionsJson { get; set; }
     public string? CorrectAnswer { get; set; }
     public string? ExplanationText { get; set; }
