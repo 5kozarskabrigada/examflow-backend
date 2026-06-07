@@ -97,6 +97,21 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Unhandled exception: {ex}");
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message, detail = ex.ToString() }));
+    }
+});
 // HTTPS redirect disabled: handled by reverse proxy (Caddy/nginx) or not needed in no-domain mode
 
 using (var scope = app.Services.CreateScope())
