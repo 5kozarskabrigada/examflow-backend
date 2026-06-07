@@ -12,6 +12,14 @@ public class Question
     public string? CorrectAnswer { get; set; }
     public string? ExplanationText { get; set; }
     public string? QuestionData { get; set; }
+    public string? Module { get; set; }
+    public string? Topic { get; set; }
+    public string? BandTarget { get; set; }
+    public string? SkillTested { get; set; }
+    public string? TimeRequirement { get; set; }
+    public string? Source { get; set; }
+    public string? Status { get; set; }
+    public string? Tags { get; set; }
     public decimal Points { get; set; } = 1m;
     public bool Bookmarked { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

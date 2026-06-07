@@ -53,11 +53,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.CorrectAnswer).HasMaxLength(1000);
             entity.Property(x => x.ExplanationText).HasMaxLength(4000);
             entity.Property(x => x.QuestionData).HasMaxLength(8000);
+            entity.Property(x => x.Module).HasMaxLength(32);
+            entity.Property(x => x.Topic).HasMaxLength(64);
+            entity.Property(x => x.BandTarget).HasMaxLength(20);
+            entity.Property(x => x.SkillTested).HasMaxLength(64);
+            entity.Property(x => x.TimeRequirement).HasMaxLength(32);
+            entity.Property(x => x.Source).HasMaxLength(50);
+            entity.Property(x => x.Status).HasMaxLength(20);
+            entity.Property(x => x.Tags).HasMaxLength(500);
             entity.Property(x => x.Points).HasPrecision(10, 2);
             entity.Property(x => x.Bookmarked).HasDefaultValue(false);
             entity.HasIndex(x => x.Subject);
             entity.HasIndex(x => x.Category);
             entity.HasIndex(x => x.Difficulty);
+            entity.HasIndex(x => x.Module);
+            entity.HasIndex(x => x.Topic);
+            entity.HasIndex(x => x.Status);
         });
 
         modelBuilder.Entity<MockExam>(entity =>

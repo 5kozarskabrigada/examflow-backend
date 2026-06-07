@@ -142,6 +142,14 @@ using (var scope = app.Services.CreateScope())
                 ""CorrectAnswer"" VARCHAR(1000),
                 ""ExplanationText"" VARCHAR(4000),
                 ""QuestionData"" VARCHAR(8000),
+                ""Module"" VARCHAR(32),
+                ""Topic"" VARCHAR(64),
+                ""BandTarget"" VARCHAR(20),
+                ""SkillTested"" VARCHAR(64),
+                ""TimeRequirement"" VARCHAR(32),
+                ""Source"" VARCHAR(50),
+                ""Status"" VARCHAR(20),
+                ""Tags"" VARCHAR(500),
                 ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
                 ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL
@@ -149,10 +157,21 @@ using (var scope = app.Services.CreateScope())
 
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""QuestionData"" VARCHAR(8000);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Module"" VARCHAR(32);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Topic"" VARCHAR(64);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""BandTarget"" VARCHAR(20);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""SkillTested"" VARCHAR(64);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""TimeRequirement"" VARCHAR(32);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Source"" VARCHAR(50);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Status"" VARCHAR(20);
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Tags"" VARCHAR(500);
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Category"" ON ""Questions"" (""Category"");
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Difficulty"" ON ""Questions"" (""Difficulty"");
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Module"" ON ""Questions"" (""Module"");
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Topic"" ON ""Questions"" (""Topic"");
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_Status"" ON ""Questions"" (""Status"");
         ");
 
         await db.Database.ExecuteSqlRawAsync(@"
@@ -481,6 +500,36 @@ api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
         query = query.Where(x => x.Bookmarked == bookmarkedValue);
     }
 
+    var module = request.Query["module"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(module))
+    {
+        query = query.Where(x => x.Module != null && x.Module.ToLower() == module.ToLower());
+    }
+
+    var topic = request.Query["topic"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(topic))
+    {
+        query = query.Where(x => x.Topic != null && x.Topic.ToLower() == topic.ToLower());
+    }
+
+    var bandTarget = request.Query["bandTarget"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(bandTarget))
+    {
+        query = query.Where(x => x.BandTarget != null && x.BandTarget.ToLower() == bandTarget.ToLower());
+    }
+
+    var skillTested = request.Query["skillTested"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(skillTested))
+    {
+        query = query.Where(x => x.SkillTested != null && x.SkillTested.ToLower() == skillTested.ToLower());
+    }
+
+    var status = request.Query["status"].ToString().Trim();
+    if (!string.IsNullOrWhiteSpace(status))
+    {
+        query = query.Where(x => x.Status != null && x.Status.ToLower() == status.ToLower());
+    }
+
     var questions = await query
         .OrderBy(x => x.Subject)
         .ThenBy(x => x.Category)
@@ -516,6 +565,14 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.CorrectAnswer = input.CorrectAnswer;
     existing.ExplanationText = input.ExplanationText;
     existing.QuestionData = input.QuestionData;
+    existing.Module = input.Module;
+    existing.Topic = input.Topic;
+    existing.BandTarget = input.BandTarget;
+    existing.SkillTested = input.SkillTested;
+    existing.TimeRequirement = input.TimeRequirement;
+    existing.Source = input.Source;
+    existing.Status = input.Status;
+    existing.Tags = input.Tags;
     existing.Points = input.Points;
     existing.Bookmarked = input.Bookmarked;
 
