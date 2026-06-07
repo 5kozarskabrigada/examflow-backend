@@ -514,9 +514,11 @@ api.MapDelete("/assignments/{id:int}", async (int id, AppDbContext db) =>
 
 api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
 {
-    var query = db.Questions.AsQueryable();
+    try
+    {
+        var query = db.Questions.AsQueryable();
 
-    var subject = request.Query["subject"].ToString().Trim();
+        var subject = request.Query["subject"].ToString().Trim();
     if (!string.IsNullOrWhiteSpace(subject))
     {
         query = query.Where(x => x.Subject.ToLower() == subject.ToLower());
@@ -605,6 +607,14 @@ api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
         .ToListAsync();
 
     return Results.Ok(questions);
+    }
+    catch (Exception ex)
+    {
+        var full = ex.ToString();
+        if (ex.InnerException != null) full += $"\n\n-- Inner --\n{ex.InnerException}";
+        Console.Error.WriteLine($"GET /questions error: {full}");
+        return Results.Problem($"Query failed: {ex.Message}\n\n{full}");
+    }
 });
 
 api.MapPost("/questions", async (AppDbContext db, Question input) =>
