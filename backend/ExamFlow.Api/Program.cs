@@ -168,6 +168,7 @@ using (var scope = app.Services.CreateScope())
             );
 
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Passage"" VARCHAR(4000);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""QuestionData"" VARCHAR(8000);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Module"" VARCHAR(32);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Topic"" VARCHAR(64);
@@ -584,10 +585,18 @@ api.MapGet("/questions", async (HttpRequest request, AppDbContext db) =>
 
 api.MapPost("/questions", async (AppDbContext db, Question input) =>
 {
-    input.CreatedAtUtc = DateTime.UtcNow;
-    db.Questions.Add(input);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/questions/{input.Id}", input);
+    try
+    {
+        input.CreatedAtUtc = DateTime.UtcNow;
+        db.Questions.Add(input);
+        await db.SaveChangesAsync();
+        return Results.Created($"/api/questions/{input.Id}", input);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"POST /questions error: {ex}");
+        return Results.Problem($"Save failed: {ex.Message}");
+    }
 });
 
 api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input) =>
@@ -603,6 +612,7 @@ api.MapPut("/questions/{id:int}", async (int id, AppDbContext db, Question input
     existing.Difficulty = input.Difficulty.Trim();
     existing.QuestionType = input.QuestionType.Trim();
     existing.QuestionText = input.QuestionText.Trim();
+    existing.Passage = input.Passage;
     existing.OptionsJson = input.OptionsJson;
     existing.CorrectAnswer = input.CorrectAnswer;
     existing.ExplanationText = input.ExplanationText;

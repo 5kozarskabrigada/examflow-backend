@@ -14,6 +14,7 @@ public class Question
     public string? OptionsJson { get; set; }
     public string? CorrectAnswer { get; set; }
     public string? ExplanationText { get; set; }
+    public string? Passage { get; set; }
     public string? QuestionData { get; set; }
     public string? Module { get; set; }
     public string? Topic { get; set; }
