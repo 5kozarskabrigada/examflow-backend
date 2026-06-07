@@ -182,7 +182,7 @@ using (var scope = app.Services.CreateScope())
                 ""GraphRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""Hint"" VARCHAR(1000),
-                ""Points"" NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+                ""Points"" REAL NOT NULL DEFAULT 1.0,
                 ""CreatedByUserId"" INTEGER NOT NULL DEFAULT 0,
                 ""Bookmarked"" BOOLEAN NOT NULL DEFAULT FALSE,
                 ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL

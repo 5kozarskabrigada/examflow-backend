@@ -33,7 +33,7 @@ public class Question
     public bool GraphRequired { get; set; }
     public bool EquationRequired { get; set; }
     public string? Hint { get; set; }
-    public decimal Points { get; set; } = 1m;
+    public float Points { get; set; } = 1f;
     public int CreatedByUserId { get; set; }
     public bool Bookmarked { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
