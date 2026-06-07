@@ -106,10 +106,15 @@ app.Use(async (context, next) =>
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine($"Unhandled exception: {ex}");
+        var full = ex.ToString();
+        if (ex.InnerException != null)
+        {
+            full += $"\n\n-- Inner Exception --\n{ex.InnerException}";
+        }
+        Console.Error.WriteLine($"Unhandled exception: {full}");
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message, detail = ex.ToString() }));
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message, inner = ex.InnerException?.Message, detail = full }));
     }
 });
 // HTTPS redirect disabled: handled by reverse proxy (Caddy/nginx) or not needed in no-domain mode
@@ -609,8 +614,18 @@ api.MapPost("/questions", async (AppDbContext db, Question input) =>
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine($"POST /questions error: {ex}");
-        return Results.Problem($"Save failed: {ex.Message}");
+        var full = ex.ToString();
+        if (ex.InnerException != null)
+        {
+            full += $"\n\n-- Inner Exception --\n{ex.InnerException}";
+        }
+        Console.Error.WriteLine($"POST /questions error: {full}");
+        var message = ex.Message;
+        if (ex.InnerException != null)
+        {
+            message += $" | Inner: {ex.InnerException.Message}";
+        }
+        return Results.Problem($"Save failed: {message}\n\n{full}");
     }
 });
 
