@@ -212,6 +212,7 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""EquationRequired"" BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Hint"" VARCHAR(1000);
             ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""CreatedByUserId"" INTEGER NOT NULL DEFAULT 0;
+            ALTER TABLE ""Questions"" DROP CONSTRAINT IF EXISTS ""Questions_CreatedByUserId_fkey"";
             ALTER TABLE ""Questions"" DROP CONSTRAINT IF EXISTS ""Questions_QuestionType_check"";
 
             CREATE INDEX IF NOT EXISTS ""IX_Questions_Subject"" ON ""Questions"" (""Subject"");
