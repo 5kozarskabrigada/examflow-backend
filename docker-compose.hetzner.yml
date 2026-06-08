@@ -9,8 +9,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__NeonDatabase: ${NEON_CONNECTION_STRING}
       Frontend__AllowedOrigins__0: ${FRONTEND_ORIGIN}
+      Frontend__AllowedOrigins__1: https://www.savad.io
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
       interval: 15s
       timeout: 3s
       retries: 5
