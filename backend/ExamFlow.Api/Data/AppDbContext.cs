@@ -87,6 +87,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Code).HasMaxLength(32);
             entity.Property(x => x.ExamType).HasMaxLength(32);
             entity.Property(x => x.TotalQuestions);
+            entity.Property(x => x.TotalPoints);
             entity.Property(x => x.SecurityLevel).HasMaxLength(32);
             entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
             entity.HasIndex(x => x.Subject);
