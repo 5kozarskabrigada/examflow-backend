@@ -242,9 +242,15 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""ScheduledForUtc"" TIMESTAMP WITH TIME ZONE NULL;
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Status"" VARCHAR(32) NOT NULL DEFAULT 'Draft';
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""CreatedAtUtc"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Description"" VARCHAR(2000);
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""Code"" VARCHAR(32);
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""DurationMinutes"" INTEGER;
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""SecurityLevel"" VARCHAR(32);
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" TIMESTAMP WITH TIME ZONE NULL;
 
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Subject"" ON ""MockExams"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Status"" ON ""MockExams"" (""Status"");
+            CREATE INDEX IF NOT EXISTS ""IX_MockExams_Code"" ON ""MockExams"" (""Code"");
         ");
 
         await db.Database.ExecuteSqlRawAsync(@"
@@ -741,7 +747,7 @@ api.MapPost("/classrooms", async (AppDbContext db, Classroom input) =>
 
 api.MapGet("/mock-exams", async (HttpRequest request, AppDbContext db) =>
 {
-    var query = db.MockExams.AsQueryable();
+    var query = db.MockExams.AsQueryable().Where(x => x.DeletedAt == null);
     var subject = request.Query["subject"].ToString().Trim();
     if (!string.IsNullOrWhiteSpace(subject))
     {
@@ -756,6 +762,13 @@ api.MapGet("/mock-exams", async (HttpRequest request, AppDbContext db) =>
     return Results.Ok(mockExams);
 });
 
+static string GenerateExamCode()
+{
+    const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    var random = new Random();
+    return new string(Enumerable.Repeat(chars, 6).Select(s => s[random.Next(s.Length)]).ToArray());
+}
+
 api.MapPost("/mock-exams", async (AppDbContext db, MockExam input) =>
 {
     if (input.ScheduledForUtc.HasValue)
@@ -765,6 +778,14 @@ api.MapPost("/mock-exams", async (AppDbContext db, MockExam input) =>
             : input.ScheduledForUtc.Value.ToUniversalTime();
     }
     input.CreatedAtUtc = DateTime.UtcNow;
+    if (string.IsNullOrWhiteSpace(input.Code))
+    {
+        input.Code = GenerateExamCode();
+    }
+    if (string.IsNullOrWhiteSpace(input.SecurityLevel))
+    {
+        input.SecurityLevel = "standard";
+    }
     db.MockExams.Add(input);
     await db.SaveChangesAsync();
     return Results.Created($"/api/mock-exams/{input.Id}", input);
@@ -772,7 +793,7 @@ api.MapPost("/mock-exams", async (AppDbContext db, MockExam input) =>
 
 api.MapPut("/mock-exams/{id:int}", async (int id, AppDbContext db, MockExam input) =>
 {
-    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id);
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
     if (existing is null)
     {
         return Results.NotFound(new { error = "Mock exam not found." });
@@ -782,6 +803,9 @@ api.MapPut("/mock-exams/{id:int}", async (int id, AppDbContext db, MockExam inpu
     existing.Title = input.Title.Trim();
     existing.ClassName = input.ClassName.Trim();
     existing.StructureText = input.StructureText;
+    existing.Description = input.Description;
+    existing.DurationMinutes = input.DurationMinutes;
+    existing.SecurityLevel = input.SecurityLevel;
     existing.ScheduledForUtc = input.ScheduledForUtc.HasValue
         ? (input.ScheduledForUtc.Value.Kind == DateTimeKind.Unspecified
             ? DateTime.SpecifyKind(input.ScheduledForUtc.Value, DateTimeKind.Utc)
@@ -795,15 +819,41 @@ api.MapPut("/mock-exams/{id:int}", async (int id, AppDbContext db, MockExam inpu
 
 api.MapDelete("/mock-exams/{id:int}", async (int id, AppDbContext db) =>
 {
-    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id);
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
     if (existing is null)
     {
         return Results.NotFound(new { error = "Mock exam not found." });
     }
 
-    db.MockExams.Remove(existing);
+    existing.DeletedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.NoContent();
+});
+
+api.MapPatch("/mock-exams/{id:int}/status", async (int id, AppDbContext db, UpdateStatusRequest request) =>
+{
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    existing.Status = request.Status.Trim();
+    await db.SaveChangesAsync();
+    return Results.Ok(existing);
+});
+
+api.MapPost("/mock-exams/{id:int}/regenerate-code", async (int id, AppDbContext db) =>
+{
+    var existing = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
+    if (existing is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    existing.Code = GenerateExamCode();
+    await db.SaveChangesAsync();
+    return Results.Ok(new { exam = existing });
 });
 
 api.MapGet("/announcements", async (AppDbContext db) =>
@@ -927,3 +977,4 @@ static AuthUserResponse ToAuthUser(AppUser user) =>
     new(user.Id, user.FullName, user.Email, user.Role, user.PrimarySubject);
 
 public record BookmarkRequest(bool Bookmarked);
+public record UpdateStatusRequest(string Status);

@@ -83,9 +83,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Title).HasMaxLength(250).IsRequired();
             entity.Property(x => x.ClassName).HasMaxLength(150).IsRequired();
             entity.Property(x => x.StructureText).HasMaxLength(1000);
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.Code).HasMaxLength(32);
+            entity.Property(x => x.SecurityLevel).HasMaxLength(32);
             entity.Property(x => x.Status).HasMaxLength(32).IsRequired();
             entity.HasIndex(x => x.Subject);
             entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.Code);
         });
 
         modelBuilder.Entity<Announcement>(entity =>
