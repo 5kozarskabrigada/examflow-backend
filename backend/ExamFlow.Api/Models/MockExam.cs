@@ -15,6 +15,7 @@ public class MockExam
     public int? DurationMinutes { get; set; }
     public string? SecurityLevel { get; set; }
     public DateTime? ScheduledForUtc { get; set; }
+    public int? CreatedByUserId { get; set; }
     public string Status { get; set; } = "Draft";
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

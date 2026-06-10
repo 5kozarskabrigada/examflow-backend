@@ -253,6 +253,8 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""MockExams"" ALTER COLUMN ""TotalQuestions"" DROP NOT NULL;
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""TotalPoints"" INTEGER NULL;
             ALTER TABLE ""MockExams"" ALTER COLUMN ""TotalPoints"" DROP NOT NULL;
+            ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""CreatedByUserId"" INTEGER NULL;
+            ALTER TABLE ""MockExams"" ALTER COLUMN ""CreatedByUserId"" DROP NOT NULL;
 
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Subject"" ON ""MockExams"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Status"" ON ""MockExams"" (""Status"");
