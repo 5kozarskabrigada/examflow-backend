@@ -140,7 +140,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(x => x.Module).HasMaxLength(32);
             entity.HasIndex(x => x.ExamId);
             entity.HasIndex(x => x.QuestionId);
-            entity.HasIndex(x => x.ExamId, x => x.Section, x => x.Module);
+            entity.HasIndex(x => new { x.ExamId, x.Section, x.Module });
 
             entity.HasOne(x => x.Exam)
                 .WithMany()
