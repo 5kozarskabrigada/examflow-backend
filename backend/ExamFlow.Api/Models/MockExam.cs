@@ -10,6 +10,7 @@ public class MockExam
     public string? Description { get; set; }
     public string? Code { get; set; }
     public string? ExamType { get; set; }
+    public int? TotalQuestions { get; set; }
     public int? DurationMinutes { get; set; }
     public string? SecurityLevel { get; set; }
     public DateTime? ScheduledForUtc { get; set; }
