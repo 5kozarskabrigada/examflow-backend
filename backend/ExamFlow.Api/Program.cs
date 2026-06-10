@@ -770,6 +770,16 @@ api.MapGet("/mock-exams", async (HttpRequest request, AppDbContext db) =>
     return Results.Ok(mockExams);
 });
 
+api.MapGet("/mock-exams/{id:int}", async (int id, AppDbContext db) =>
+{
+    var exam = await db.MockExams.FirstOrDefaultAsync(x => x.Id == id && x.DeletedAt == null);
+    if (exam is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+    return Results.Ok(exam);
+});
+
 static string GenerateExamCode()
 {
     const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
