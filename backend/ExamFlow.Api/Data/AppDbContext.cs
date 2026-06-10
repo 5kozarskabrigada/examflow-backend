@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Classroom> Classrooms => Set<Classroom>();
     public DbSet<Question> Questions => Set<Question>();
     public DbSet<MockExam> MockExams => Set<MockExam>();
+    public DbSet<ExamQuestion> ExamQuestions => Set<ExamQuestion>();
     public DbSet<Announcement> Announcements => Set<Announcement>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<AppUser> Users => Set<AppUser>();
@@ -130,6 +131,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExamQuestion>(entity =>
+        {
+            entity.Property(x => x.Section).HasMaxLength(64);
+            entity.Property(x => x.Module).HasMaxLength(32);
+            entity.HasIndex(x => x.ExamId);
+            entity.HasIndex(x => x.QuestionId);
+            entity.HasIndex(x => x.ExamId, x => x.Section, x => x.Module);
+
+            entity.HasOne(x => x.Exam)
+                .WithMany()
+                .HasForeignKey(x => x.ExamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Question)
+                .WithMany()
+                .HasForeignKey(x => x.QuestionId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

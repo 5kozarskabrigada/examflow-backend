@@ -874,6 +874,97 @@ api.MapPost("/mock-exams/{id:int}/regenerate-code", async (int id, AppDbContext 
     return Results.Ok(new { exam = existing });
 });
 
+// Exam Questions endpoints
+api.MapGet("/mock-exams/{examId:int}/questions", async (int examId, AppDbContext db) =>
+{
+    var examQuestions = await db.ExamQuestions
+        .Where(eq => eq.ExamId == examId)
+        .Include(eq => eq.Question)
+        .OrderBy(eq => eq.OrderIndex)
+        .ToListAsync();
+    
+    return Results.Ok(examQuestions);
+});
+
+api.MapPost("/mock-exams/{examId:int}/questions", async (int examId, AppDbContext db, AddExamQuestionRequest request) =>
+{
+    var exam = await db.MockExams.FirstOrDefaultAsync(x => x.Id == examId && x.DeletedAt == null);
+    if (exam is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    var question = await db.Questions.FirstOrDefaultAsync(x => x.Id == request.QuestionId);
+    if (question is null)
+    {
+        return Results.NotFound(new { error = "Question not found." });
+    }
+
+    // Get max order index for this section/module
+    var maxOrder = await db.ExamQuestions
+        .Where(eq => eq.ExamId == examId && 
+                     eq.Section == request.Section && 
+                     eq.Module == request.Module)
+        .MaxAsync(eq => (int?)eq.OrderIndex) ?? 0;
+
+    var examQuestion = new ExamQuestion
+    {
+        ExamId = examId,
+        QuestionId = request.QuestionId,
+        Section = request.Section,
+        Module = request.Module,
+        OrderIndex = maxOrder + 1
+    };
+
+    db.ExamQuestions.Add(examQuestion);
+    await db.SaveChangesAsync();
+    
+    return Results.Created($"/api/mock-exams/{examId}/questions/{examQuestion.Id}", examQuestion);
+});
+
+api.MapDelete("/mock-exams/{examId:int}/questions/{questionId:int}", async (int examId, int questionId, AppDbContext db) =>
+{
+    var examQuestion = await db.ExamQuestions
+        .FirstOrDefaultAsync(eq => eq.ExamId == examId && eq.QuestionId == questionId);
+    
+    if (examQuestion is null)
+    {
+        return Results.NotFound(new { error = "Question not found in exam." });
+    }
+
+    db.ExamQuestions.Remove(examQuestion);
+    await db.SaveChangesAsync();
+    
+    return Results.NoContent();
+});
+
+api.MapPatch("/mock-exams/{examId:int}/questions/reorder", async (int examId, AppDbContext db, ReorderQuestionsRequest request) =>
+{
+    var exam = await db.MockExams.FirstOrDefaultAsync(x => x.Id == examId && x.DeletedAt == null);
+    if (exam is null)
+    {
+        return Results.NotFound(new { error = "Mock exam not found." });
+    }
+
+    var examQuestions = await db.ExamQuestions
+        .Where(eq => eq.ExamId == examId && 
+                     eq.Section == request.Section && 
+                     eq.Module == request.Module)
+        .ToListAsync();
+
+    foreach (var (questionId, index) in request.QuestionIdsInOrder.Select((id, i) => (id, i)))
+    {
+        var examQuestion = examQuestions.FirstOrDefault(eq => eq.QuestionId == questionId);
+        if (examQuestion != null)
+        {
+            examQuestion.OrderIndex = index;
+        }
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok(new { success = true });
+});
+
 api.MapGet("/announcements", async (AppDbContext db) =>
 {
     var announcements = await db.Announcements
@@ -996,3 +1087,5 @@ static AuthUserResponse ToAuthUser(AppUser user) =>
 
 public record BookmarkRequest(bool Bookmarked);
 public record UpdateStatusRequest(string Status);
+public record AddExamQuestionRequest(int QuestionId, string Section, string? Module);
+public record ReorderQuestionsRequest(string Section, string? Module, List<int> QuestionIdsInOrder);
