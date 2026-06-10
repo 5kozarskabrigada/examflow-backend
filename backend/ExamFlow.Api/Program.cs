@@ -248,6 +248,7 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""SecurityLevel"" VARCHAR(32);
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""DeletedAt"" TIMESTAMP WITH TIME ZONE NULL;
             ALTER TABLE ""MockExams"" ADD COLUMN IF NOT EXISTS ""ExamType"" VARCHAR(32) NULL;
+            ALTER TABLE ""MockExams"" ALTER COLUMN ""ExamType"" DROP NOT NULL;
 
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Subject"" ON ""MockExams"" (""Subject"");
             CREATE INDEX IF NOT EXISTS ""IX_MockExams_Status"" ON ""MockExams"" (""Status"");
